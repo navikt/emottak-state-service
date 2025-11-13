@@ -16,8 +16,11 @@ import org.jetbrains.exposed.v1.exceptions.ExposedSQLException
 import org.jetbrains.exposed.v1.jdbc.transactions.suspendTransaction
 import org.postgresql.util.PSQLException
 import org.testcontainers.containers.PostgreSQLContainer
+import java.net.URI
 import kotlin.time.Clock
 import kotlin.uuid.Uuid
+
+private const val MESSAGE = "http://exmaple.com/messages/1"
 
 class MessageStateHistoryRepositorySpec : StringSpec(
     {
@@ -59,13 +62,15 @@ class MessageStateHistoryRepositorySpec : StringSpec(
                     val messageStateHistoryRepository = ExposedMessageStateHistoryRepository(database)
 
                     val externalRefId = Uuid.random()
+                    val externalMessageUrl = URI.create(MESSAGE).toURL()
                     val state = NEW
                     val stateChanged = Clock.System.now()
 
-                    messageStateRepository.upsertState(
+                    messageStateRepository.createState(
                         DIALOG,
                         state,
                         externalRefId,
+                        externalMessageUrl,
                         stateChanged
                     )
 
@@ -95,13 +100,15 @@ class MessageStateHistoryRepositorySpec : StringSpec(
                     val messageStateHistoryRepository = ExposedMessageStateHistoryRepository(database)
 
                     val externalRefId = Uuid.random()
+                    val externalMessageUrl = URI.create(MESSAGE).toURL()
                     val state = NEW
                     val stateChanged = Clock.System.now()
 
-                    messageStateRepository.upsertState(
+                    messageStateRepository.createState(
                         DIALOG,
                         state,
                         externalRefId,
+                        externalMessageUrl,
                         stateChanged
                     )
 
@@ -151,10 +158,12 @@ class MessageStateHistoryRepositorySpec : StringSpec(
                     val messageStateHistoryRepository = ExposedMessageStateHistoryRepository(database)
 
                     val externalRefId = Uuid.random()
-                    val first = messageStateRepository.upsertState(
+                    val externalMessageUrl = URI.create(MESSAGE).toURL()
+                    val first = messageStateRepository.createState(
                         DIALOG,
                         NEW,
                         externalRefId,
+                        externalMessageUrl,
                         Clock.System.now()
                     )
 
@@ -165,7 +174,7 @@ class MessageStateHistoryRepositorySpec : StringSpec(
                         first.lastStateChange
                     )
 
-                    val second = messageStateRepository.upsertState(
+                    val second = messageStateRepository.updateState(
                         DIALOG,
                         PROCESSED,
                         externalRefId,
@@ -179,7 +188,7 @@ class MessageStateHistoryRepositorySpec : StringSpec(
                         second.lastStateChange
                     )
 
-                    val third = messageStateRepository.upsertState(
+                    val third = messageStateRepository.updateState(
                         DIALOG,
                         COMPLETED,
                         externalRefId,

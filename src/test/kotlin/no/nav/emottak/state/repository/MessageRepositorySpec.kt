@@ -11,8 +11,12 @@ import no.nav.emottak.state.model.MessageType.DIALOG
 import no.nav.emottak.state.shouldBeInstant
 import org.jetbrains.exposed.v1.jdbc.transactions.suspendTransaction
 import org.testcontainers.containers.PostgreSQLContainer
+import java.net.URI
 import kotlin.time.Clock
 import kotlin.uuid.Uuid
+
+private const val MESSAGE1 = "http://exmaple.com/messages/1"
+private const val MESSAGE2 = "http://exmaple.com/messages/2"
 
 class MessageRepositorySpec : StringSpec(
     {
@@ -31,17 +35,20 @@ class MessageRepositorySpec : StringSpec(
                     val messageRepository = ExposedMessageRepository(database)
 
                     val externalRefId = Uuid.random()
+                    val externalMessageUrl = URI.create(MESSAGE1).toURL()
                     val now = Clock.System.now()
-                    val messageState = messageRepository.upsertState(
+                    val messageState = messageRepository.createState(
                         DIALOG,
                         NEW,
                         externalRefId,
+                        externalMessageUrl,
                         now
                     )
 
                     messageState.messageType shouldBe DIALOG
                     messageState.currentState shouldBe NEW
                     messageState.externalRefId shouldBe externalRefId
+                    messageState.externalMessageUrl shouldBe externalMessageUrl
                     messageState.lastStateChange shouldBeInstant now
                 }
             }
@@ -55,17 +62,19 @@ class MessageRepositorySpec : StringSpec(
                     val messageRepository = ExposedMessageRepository(database)
 
                     val externalRefId = Uuid.random()
+                    val externalMessageUrl = URI.create(MESSAGE1).toURL()
                     val now = Clock.System.now()
 
-                    messageRepository.upsertState(
+                    messageRepository.createState(
                         DIALOG,
                         NEW,
                         externalRefId,
+                        externalMessageUrl,
                         now
                     )
 
                     val stateChanged = Clock.System.now()
-                    val messageState = messageRepository.upsertState(
+                    val messageState = messageRepository.updateState(
                         DIALOG,
                         PROCESSED,
                         externalRefId,
@@ -75,6 +84,7 @@ class MessageRepositorySpec : StringSpec(
                     messageState.messageType shouldBe DIALOG
                     messageState.currentState shouldBe PROCESSED
                     messageState.externalRefId shouldBe externalRefId
+                    messageState.externalMessageUrl shouldBe externalMessageUrl
                     messageState.lastStateChange shouldBeInstant stateChanged
                 }
             }
@@ -98,10 +108,12 @@ class MessageRepositorySpec : StringSpec(
                     val messageRepository = ExposedMessageRepository(database)
 
                     val referenceId = Uuid.random()
-                    messageRepository.upsertState(
+                    val externalMessageUrl = URI.create(MESSAGE1).toURL()
+                    messageRepository.createState(
                         DIALOG,
                         NEW,
                         referenceId,
+                        externalMessageUrl,
                         Clock.System.now()
                     )
 
@@ -127,17 +139,19 @@ class MessageRepositorySpec : StringSpec(
                 suspendTransaction(database) {
                     val messageRepository = ExposedMessageRepository(database)
 
-                    messageRepository.upsertState(
+                    messageRepository.createState(
                         DIALOG,
                         PROCESSED,
                         Uuid.random(),
+                        URI.create(MESSAGE1).toURL(),
                         Clock.System.now()
                     )
 
-                    messageRepository.upsertState(
+                    messageRepository.createState(
                         DIALOG,
                         PROCESSED,
                         Uuid.random(),
+                        URI.create(MESSAGE2).toURL(),
                         Clock.System.now()
                     )
 
@@ -153,17 +167,19 @@ class MessageRepositorySpec : StringSpec(
                 suspendTransaction(database) {
                     val messageRepository = ExposedMessageRepository(database)
 
-                    messageRepository.upsertState(
+                    messageRepository.createState(
                         DIALOG,
                         NEW,
                         Uuid.random(),
+                        URI.create(MESSAGE1).toURL(),
                         Clock.System.now()
                     )
 
-                    messageRepository.upsertState(
+                    messageRepository.createState(
                         DIALOG,
                         NEW,
                         Uuid.random(),
+                        URI.create(MESSAGE2).toURL(),
                         Clock.System.now()
                     )
 

@@ -5,29 +5,32 @@ import no.nav.emottak.state.model.MessageDeliveryState.NEW
 import no.nav.emottak.state.model.MessageState
 import no.nav.emottak.state.model.MessageType
 import no.nav.emottak.state.repository.Messages.currentState
-import no.nav.emottak.state.util.ExposedUuidTransformer
+import no.nav.emottak.state.util.UrlTransformer
+import no.nav.emottak.state.util.UuidTransformer
 import org.jetbrains.exposed.v1.core.ResultRow
 import org.jetbrains.exposed.v1.core.Table
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.datetime.CurrentTimestamp
 import org.jetbrains.exposed.v1.datetime.timestamp
 import org.jetbrains.exposed.v1.jdbc.Database
+import org.jetbrains.exposed.v1.jdbc.insertReturning
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.transactions.suspendTransaction
-import org.jetbrains.exposed.v1.jdbc.upsertReturning
-import kotlin.time.Clock
+import org.jetbrains.exposed.v1.jdbc.updateReturning
+import java.net.URL
 import kotlin.time.Instant
 import kotlin.uuid.Uuid
 
 object Messages : Table("messages") {
-    val id = uuid("id").transform(ExposedUuidTransformer())
+    val id = uuid("id").transform(UuidTransformer())
 
     override val primaryKey = PrimaryKey(id)
 
     val externalRefId = uuid("external_reference_id")
-        .transform(ExposedUuidTransformer())
+        .transform(UuidTransformer())
         .uniqueIndex()
 
+    val externalMessageUrl = text("external_message_url").transform(UrlTransformer)
     val messageType = enumerationByName("message_type", 100, MessageType::class)
     val currentState = enumerationByName("current_state", 100, MessageDeliveryState::class)
     val lastStateChange = timestamp("last_state_change")
@@ -36,7 +39,15 @@ object Messages : Table("messages") {
 }
 
 interface MessageRepository {
-    suspend fun upsertState(
+    suspend fun createState(
+        messageType: MessageType,
+        state: MessageDeliveryState,
+        externalRefId: Uuid,
+        externalMessageUrl: URL,
+        lastStateChange: Instant
+    ): MessageState
+
+    suspend fun updateState(
         messageType: MessageType,
         state: MessageDeliveryState,
         externalRefId: Uuid,
@@ -49,26 +60,37 @@ interface MessageRepository {
 }
 
 class ExposedMessageRepository(private val database: Database) : MessageRepository {
-    override suspend fun upsertState(
+    override suspend fun createState(
+        messageType: MessageType,
+        state: MessageDeliveryState,
+        externalRefId: Uuid,
+        externalMessageUrl: URL,
+        lastStateChange: Instant
+    ): MessageState =
+        Messages.insertReturning { insert ->
+            insert[Messages.messageType] = messageType
+            insert[currentState] = state
+            insert[Messages.externalRefId] = externalRefId
+            insert[Messages.externalMessageUrl] = externalMessageUrl
+            insert[Messages.lastStateChange] = lastStateChange
+            insert[updatedAt] = CurrentTimestamp
+        }
+            .single()
+            .toMessageState()
+
+    override suspend fun updateState(
         messageType: MessageType,
         state: MessageDeliveryState,
         externalRefId: Uuid,
         lastStateChange: Instant
-    ): MessageState = Messages.upsertReturning(
-        keys = arrayOf(Messages.externalRefId),
-        onUpdate = { update ->
-            update[currentState] = state
-            update[Messages.lastStateChange] = lastStateChange
-            update[Messages.updatedAt] = CurrentTimestamp
+    ): MessageState =
+        Messages.updateReturning(where = { Messages.externalRefId eq externalRefId }) { upsert ->
+            upsert[currentState] = state
+            upsert[Messages.lastStateChange] = lastStateChange
+            upsert[Messages.updatedAt] = CurrentTimestamp
         }
-    ) { insert ->
-        insert[Messages.messageType] = messageType
-        insert[Messages.externalRefId] = externalRefId
-        insert[currentState] = state
-        insert[Messages.lastStateChange] = lastStateChange
-    }
-        .single()
-        .toMessageState()
+            .single()
+            .toMessageState()
 
     override suspend fun findOrNull(id: Uuid): MessageState? = suspendTransaction(database) {
         Messages
@@ -87,6 +109,7 @@ class ExposedMessageRepository(private val database: Database) : MessageReposito
         this[Messages.id],
         this[Messages.messageType],
         this[Messages.externalRefId],
+        this[Messages.externalMessageUrl],
         this[currentState],
         this[Messages.lastStateChange],
         this[Messages.createdAt],
@@ -97,36 +120,40 @@ class ExposedMessageRepository(private val database: Database) : MessageReposito
 class FakeMessageRepository : MessageRepository {
     private val messages = HashMap<Uuid, MessageState>()
 
-    override suspend fun upsertState(
+    override suspend fun createState(
+        messageType: MessageType,
+        state: MessageDeliveryState,
+        externalRefId: Uuid,
+        externalMessageUrl: URL,
+        lastStateChange: Instant
+    ): MessageState {
+        val newMessage = MessageState(
+            id = Uuid.random(),
+            messageType = messageType,
+            currentState = state,
+            externalRefId = externalRefId,
+            externalMessageUrl = externalMessageUrl,
+            lastStateChange = lastStateChange,
+            createdAt = lastStateChange,
+            updatedAt = lastStateChange
+        )
+        messages[externalRefId] = newMessage
+        return newMessage
+    }
+
+    override suspend fun updateState(
         messageType: MessageType,
         state: MessageDeliveryState,
         externalRefId: Uuid,
         lastStateChange: Instant
     ): MessageState {
-        val now = Clock.System.now()
-        val existing = messages.values.find { it.externalRefId == externalRefId }
-
-        val updated = if (existing != null) {
-            existing.copy(
-                currentState = state,
-                lastStateChange = lastStateChange,
-                updatedAt = now
-            )
-        } else {
-            val newId = Uuid.random()
-
-            MessageState(
-                id = newId,
-                messageType = messageType,
-                currentState = state,
-                externalRefId = externalRefId,
-                lastStateChange = lastStateChange,
-                createdAt = now,
-                updatedAt = now
-            )
-        }
-
-        messages[updated.id] = updated
+        val existing = messages[externalRefId]
+        val updated = existing!!.copy(
+            currentState = state,
+            lastStateChange = lastStateChange,
+            updatedAt = lastStateChange
+        )
+        messages[externalRefId] = updated
         return updated
     }
 

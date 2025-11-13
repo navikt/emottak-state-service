@@ -2,7 +2,7 @@ package no.nav.emottak.state.repository
 
 import no.nav.emottak.state.model.MessageDeliveryState
 import no.nav.emottak.state.model.MessageStateChange
-import no.nav.emottak.state.util.ExposedUuidTransformer
+import no.nav.emottak.state.util.UuidTransformer
 import org.jetbrains.exposed.v1.core.ResultRow
 import org.jetbrains.exposed.v1.core.Table
 import org.jetbrains.exposed.v1.core.eq
@@ -15,12 +15,12 @@ import kotlin.time.Instant
 import kotlin.uuid.Uuid
 
 object MessageStateHistory : Table("message_state_history") {
-    val id = uuid("id").transform(ExposedUuidTransformer())
+    val id = uuid("id").transform(UuidTransformer())
 
     override val primaryKey = PrimaryKey(id)
 
     val messageId = uuid("message_id")
-        .transform(ExposedUuidTransformer())
+        .transform(UuidTransformer())
         .references(Messages.id)
 
     val oldState = enumerationByName("old_state", 100, MessageDeliveryState::class).nullable()

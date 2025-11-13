@@ -9,10 +9,11 @@ import no.nav.emottak.state.model.MessageType.DIALOG
 import no.nav.emottak.state.repository.FakeMessageRepository
 import no.nav.emottak.state.repository.FakeMessageStateHistoryRepository
 import no.nav.emottak.state.repository.FakeMessageStateTransactionRepository
-import kotlin.time.Clock
-import kotlin.time.DurationUnit.MILLISECONDS
-import kotlin.time.toDuration
+import java.net.URI
 import kotlin.uuid.Uuid
+
+private const val MESSAGE1 = "http://exmaple.com/messages/1"
+private const val MESSAGE2 = "http://exmaple.com/messages/2"
 
 class MessageStateServiceSpec : StringSpec(
     {
@@ -20,16 +21,17 @@ class MessageStateServiceSpec : StringSpec(
             val messageStateService = transactionalMessageStateService()
 
             val externalRefId = Uuid.random()
-            val now = Clock.System.now()
+            val externalMessageUrl = URI(MESSAGE1).toURL()
 
             val snapshot = messageStateService.createInitialState(
                 messageType = DIALOG,
                 externalRefId = externalRefId,
-                initialState = NEW,
-                occurredAt = now
+                externalMessageUrl = externalMessageUrl,
+                initialState = NEW
             )
 
             snapshot.messageState.externalRefId shouldBe externalRefId
+            snapshot.messageState.externalMessageUrl shouldBe externalMessageUrl
             snapshot.messageState.currentState shouldBe NEW
             snapshot.messageStateChange.size shouldBe 1
             snapshot.messageStateChange.first().newState shouldBe NEW
@@ -40,21 +42,19 @@ class MessageStateServiceSpec : StringSpec(
             val messageStateService = transactionalMessageStateService()
 
             val externalRefId = Uuid.random()
-            val now1 = Clock.System.now()
-            val now2 = now1.plus(10L.toDuration(MILLISECONDS))
+            val externalMessageUrl = URI(MESSAGE1).toURL()
 
             messageStateService.createInitialState(
                 DIALOG,
                 externalRefId,
-                NEW,
-                now1
+                externalMessageUrl,
+                NEW
             )
             val updated = messageStateService.recordStateChange(
                 DIALOG,
                 NEW,
                 COMPLETED,
-                externalRefId,
-                now2
+                externalRefId
             )
 
             updated.messageState.currentState shouldBe COMPLETED
@@ -62,32 +62,33 @@ class MessageStateServiceSpec : StringSpec(
             updated.messageStateChange.last().newState shouldBe COMPLETED
         }
 
-        "Get message state  - returns null when missing" {
+        "Get message snapshot  - returns null when missing" {
             val messageStateService = transactionalMessageStateService()
-            messageStateService.getMessageState(Uuid.random()).shouldBeNull()
+            messageStateService.getMessageSnapshot(Uuid.random()).shouldBeNull()
         }
 
-        "Find messages for polling - returns only NEW messages" {
+        "Find pollable messages - returns only NEW messages" {
             val messageStateService = transactionalMessageStateService()
 
             val externalRefId1 = Uuid.random()
+            val externalMessageUrl1 = URI(MESSAGE1).toURL()
             val externalRefId2 = Uuid.random()
-            val now = Clock.System.now()
+            val externalMessageUrl2 = URI(MESSAGE2).toURL()
 
             messageStateService.createInitialState(
                 DIALOG,
                 externalRefId1,
-                NEW,
-                now
+                externalMessageUrl1,
+                NEW
             )
             messageStateService.createInitialState(
                 DIALOG,
                 externalRefId2,
-                COMPLETED,
-                now
+                externalMessageUrl2,
+                COMPLETED
             )
 
-            val result = messageStateService.findMessagesForPolling(10)
+            val result = messageStateService.findPollableMessages(10)
 
             result.size shouldBe 1
             result.first().externalRefId shouldBe externalRefId1

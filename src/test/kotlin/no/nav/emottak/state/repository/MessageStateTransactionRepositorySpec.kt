@@ -10,8 +10,11 @@ import no.nav.emottak.state.model.MessageDeliveryState.PROCESSED
 import no.nav.emottak.state.model.MessageType.DIALOG
 import no.nav.emottak.state.shouldBeInstant
 import org.testcontainers.containers.PostgreSQLContainer
+import java.net.URI
 import kotlin.time.Clock
 import kotlin.uuid.Uuid
+
+private const val MESSAGE = "http://exmaple.com/messages/1"
 
 class MessageStateTransactionRepositorySpec : StringSpec(
     {
@@ -32,18 +35,20 @@ class MessageStateTransactionRepositorySpec : StringSpec(
                 )
 
                 val externalRefId = Uuid.random()
+                val externalMessageUrl = URI.create(MESSAGE).toURL()
                 val now = Clock.System.now()
-                val snapshot = messageStateTransactionRepository.recordStateChange(
+                val snapshot = messageStateTransactionRepository.createInitialState(
                     DIALOG,
-                    null,
                     NEW,
                     externalRefId,
+                    externalMessageUrl,
                     now
                 )
 
                 snapshot.messageState.messageType shouldBe DIALOG
                 snapshot.messageState.currentState shouldBe NEW
                 snapshot.messageState.externalRefId shouldBe externalRefId
+                snapshot.messageState.externalMessageUrl shouldBe externalMessageUrl
 
                 snapshot.messageStateChange.size shouldBe 1
 
@@ -66,13 +71,14 @@ class MessageStateTransactionRepositorySpec : StringSpec(
                 )
 
                 val externalRefId = Uuid.random()
+                val externalMessageUrl = URI.create(MESSAGE).toURL()
                 val now = Clock.System.now()
 
-                messageStateTransactionRepository.recordStateChange(
+                messageStateTransactionRepository.createInitialState(
                     DIALOG,
-                    null,
                     NEW,
                     externalRefId,
+                    externalMessageUrl,
                     now
                 )
 

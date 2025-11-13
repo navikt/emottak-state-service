@@ -1,12 +1,13 @@
 CREATE TABLE IF NOT EXISTS messages
 (
-    id                UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    message_type      VARCHAR(100)             NOT NULL,
-    external_reference_id   UUID               NOT NULL UNIQUE,
-    current_state     VARCHAR(100)             NOT NULL,
-    last_state_change TIMESTAMPTZ              NOT NULL,
-    created_at        TIMESTAMPTZ              NOT NULL DEFAULT now(),
-    updated_at        TIMESTAMPTZ              NOT NULL DEFAULT now()
+    id                    UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    message_type          VARCHAR(100)             NOT NULL,
+    external_reference_id UUID                     NOT NULL UNIQUE,
+    external_message_url  TEXT                     NOT NULL,
+    current_state         VARCHAR(100)             NOT NULL,
+    last_state_change     TIMESTAMPTZ              NOT NULL,
+    created_at            TIMESTAMPTZ              NOT NULL DEFAULT now(),
+    updated_at            TIMESTAMPTZ              NOT NULL DEFAULT now()
 );
 
 CREATE INDEX idx_messages_state ON messages (current_state);
