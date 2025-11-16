@@ -78,17 +78,48 @@ interface MessageStateService {
     /**
      * Finds messages that are candidates for polling against the external system.
      *
-     * Typically returns messages that are still in progress or awaiting confirmation
-     * from the external system (e.g., messages in states such as `SENT` or `DELIVERING`).
-     * These are used by the poller component to determine which messages should
-     * have their external status rechecked.
+     * This function returns messages that are considered "in flight" — for example,
+     * those in intermediate delivery states such as `NEW`. These messages require
+     * periodic polling to verify whether their state has changed in the external system.
      *
-     * The returned list is limited by the [limit] parameter to prevent excessive batch sizes.
+     * The poller will only include messages that have not been polled recently.
+     * This is determined by comparing each message’s `lastPolledAt` [Instant]
+     * against the configured minimum polling interval (see [PollerConfig.minAgeSeconds]).
      *
-     * @param limit The maximum number of pollable messages to return. Defaults to 100.
-     * @return A list of messages that are currently eligible for polling.
+     * The number of messages returned is limited by the configured fetch limit
+     * (see [PollerConfig.fetchLimit]) to prevent oversized batches.
+     *
+     * Default configuration values:
+     * - `minAgeSeconds`: 30 seconds — a message must be at least this old since last polling
+     * - `fetchLimit`: 100 messages — the maximum number of messages fetched per batch
+     *
+     * These defaults can be overridden via environment variables or application configuration
+     * without requiring code changes.
+     *
+     * @return a list of messages that are currently eligible for polling.
      */
-    suspend fun findPollableMessages(limit: Int = 100): List<MessageState>
+    suspend fun findPollableMessages(): List<MessageState>
+
+    /**
+     * Marks one or more messages as having been polled.
+     *
+     * This function updates the `lastPolledAt` [Instant] for the given messages,
+     * indicating that their external delivery status has recently been checked.
+     *
+     * It is typically called by the poller component after each polling cycle,
+     * once messages have been evaluated and any necessary state changes recorded.
+     *
+     * Updating this [Instant] ensures that the same messages will not be picked up
+     * again in the next polling iteration until the configured minimum polling interval
+     * has elapsed (see [PollerConfig.minAgeSeconds]).
+     *
+     * Default configuration values:
+     * - `minAgeSeconds`: 30 seconds — a message must be at least this old since last polling
+     *
+     * @param externalRefIds A list of external reference id's corresponding to the messages
+     *        that have just been polled successfully.
+     */
+    suspend fun markAsPolled(externalRefIds: List<Uuid>)
 }
 
 class TransactionalMessageStateService(
@@ -131,6 +162,9 @@ class TransactionalMessageStateService(
         return MessageStateSnapshot(state, history)
     }
 
-    override suspend fun findPollableMessages(limit: Int): List<MessageState> =
-        messageRepository.findForPolling(limit)
+    override suspend fun findPollableMessages(): List<MessageState> = messageRepository.findForPolling()
+
+    override suspend fun markAsPolled(externalRefIds: List<Uuid>) {
+        messageRepository
+    }
 }

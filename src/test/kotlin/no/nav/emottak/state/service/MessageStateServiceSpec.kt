@@ -88,7 +88,7 @@ class MessageStateServiceSpec : StringSpec(
                 COMPLETED
             )
 
-            val result = messageStateService.findPollableMessages(10)
+            val result = messageStateService.findPollableMessages()
 
             result.size shouldBe 1
             result.first().externalRefId shouldBe externalRefId1
