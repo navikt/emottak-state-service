@@ -3,6 +3,7 @@ package no.nav.emottak.state.service
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.shouldNotBe
 import no.nav.emottak.state.model.MessageDeliveryState.COMPLETED
 import no.nav.emottak.state.model.MessageDeliveryState.NEW
 import no.nav.emottak.state.model.MessageType.DIALOG
@@ -88,10 +89,55 @@ class MessageStateServiceSpec : StringSpec(
                 COMPLETED
             )
 
-            val result = messageStateService.findPollableMessages(10)
+            val result = messageStateService.findPollableMessages()
 
             result.size shouldBe 1
             result.first().externalRefId shouldBe externalRefId1
+        }
+
+        "Mark as polled - updates last polled at for given messages" {
+            val messageStateService = transactionalMessageStateService()
+
+            val externalRefId1 = Uuid.random()
+            val externalMessageUrl1 = URI(MESSAGE1).toURL()
+            val externalRefId2 = Uuid.random()
+            val externalMessageUrl2 = URI(MESSAGE2).toURL()
+
+            // Create two states
+            messageStateService.createInitialState(
+                DIALOG,
+                externalRefId1,
+                externalMessageUrl1,
+                NEW
+            )
+            messageStateService.createInitialState(
+                DIALOG,
+                externalRefId2,
+                externalMessageUrl2,
+                NEW
+            )
+
+            messageStateService
+                .getMessageSnapshot(externalRefId1)!!
+                .messageState
+                .lastPolledAt
+                .shouldBeNull()
+
+            messageStateService
+                .getMessageSnapshot(externalRefId2)!!
+                .messageState
+                .lastPolledAt
+                .shouldBeNull()
+
+            val updatedCount = messageStateService.markAsPolled(listOf(externalRefId1))
+
+            updatedCount shouldBe 1
+
+            val msg1 = messageStateService.getMessageSnapshot(externalRefId1)!!.messageState
+            val msg2 = messageStateService.getMessageSnapshot(externalRefId2)!!.messageState
+
+            msg1.lastPolledAt shouldNotBe null
+            msg2.lastPolledAt shouldBe null
         }
     }
 )

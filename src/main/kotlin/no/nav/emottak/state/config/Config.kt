@@ -4,10 +4,17 @@ import com.sksamuel.hoplite.Masked
 import kotlinx.serialization.Serializable
 import no.nav.emottak.utils.config.Server
 import java.util.Properties
+import kotlin.time.Duration
 
 data class Config(
     val server: Server,
+    val poller: Poller,
     val database: Database
+)
+
+data class Poller(
+    val fetchLimit: Int,
+    val minAgeSeconds: Duration
 )
 
 data class Database(

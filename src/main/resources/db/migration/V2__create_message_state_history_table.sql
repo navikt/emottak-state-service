@@ -7,5 +7,4 @@ CREATE TABLE IF NOT EXISTS message_state_history
     changed_at TIMESTAMPTZ              NOT NULL
 );
 
-CREATE INDEX idx_message_state_history_message_id
-    ON message_state_history (message_id);
+CREATE INDEX idx_message_state_history_message_id ON message_state_history (message_id);

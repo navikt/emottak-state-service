@@ -11,6 +11,7 @@ data class MessageState(
     val externalMessageUrl: URL,
     val currentState: MessageDeliveryState,
     val lastStateChange: Instant,
+    val lastPolledAt: Instant?,
     val createdAt: Instant,
     val updatedAt: Instant
 )
