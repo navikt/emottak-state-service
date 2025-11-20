@@ -8,7 +8,7 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import no.nav.emottak.state.container
 import no.nav.emottak.state.database
-import no.nav.emottak.state.model.ExternalDeliveryState.Acknowledged
+import no.nav.emottak.state.model.ExternalDeliveryState.ACKNOWLEDGED
 import no.nav.emottak.state.model.MessageType.DIALOG
 import no.nav.emottak.state.repository.Messages.externalRefId
 import no.nav.emottak.state.repository.Messages.lastPolledAt
@@ -88,12 +88,12 @@ class MessageRepositorySpec : StringSpec(
 
                     val newState = messageRepository.updateState(
                         externalRefId = externalRefId,
-                        externalDeliveryState = Acknowledged,
+                        externalDeliveryState = ACKNOWLEDGED,
                         appRecStatus = null,
                         lastStateChange = updatedAt
                     )
 
-                    newState.externalDeliveryState shouldBe Acknowledged
+                    newState.externalDeliveryState shouldBe ACKNOWLEDGED
                     newState.appRecStatus shouldBe null
                     newState.lastStateChange shouldBeInstant updatedAt
                 }
@@ -169,7 +169,7 @@ class MessageRepositorySpec : StringSpec(
                     )
                         .also {
                             Messages.update({ externalRefId eq it.externalRefId }) { row ->
-                                row[externalDeliveryState] = Acknowledged
+                                row[externalDeliveryState] = ACKNOWLEDGED
                             }
                         }
 

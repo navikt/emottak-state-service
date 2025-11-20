@@ -4,7 +4,7 @@ import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
-import no.nav.emottak.state.model.ExternalDeliveryState.Acknowledged
+import no.nav.emottak.state.model.ExternalDeliveryState.ACKNOWLEDGED
 import no.nav.emottak.state.model.MessageType.DIALOG
 import no.nav.emottak.state.repository.FakeMessageRepository
 import no.nav.emottak.state.repository.FakeMessageStateHistoryRepository
@@ -63,18 +63,18 @@ class MessageStateServiceSpec : StringSpec(
                 messageType = DIALOG,
                 externalRefId = externalRefId,
                 oldDeliveryState = null,
-                newDeliveryState = Acknowledged,
+                newDeliveryState = ACKNOWLEDGED,
                 oldAppRecStatus = null,
                 newAppRecStatus = null
             )
 
-            updated.messageState.externalDeliveryState shouldBe Acknowledged
+            updated.messageState.externalDeliveryState shouldBe ACKNOWLEDGED
 
             updated.messageStateChange.size shouldBe 2
             val last = updated.messageStateChange.last()
 
             last.oldDeliveryState shouldBe null
-            last.newDeliveryState shouldBe Acknowledged
+            last.newDeliveryState shouldBe ACKNOWLEDGED
             last.oldAppRecStatus shouldBe null
             last.newAppRecStatus shouldBe null
         }
@@ -109,7 +109,7 @@ class MessageStateServiceSpec : StringSpec(
                 messageType = DIALOG,
                 externalRefId = externalRefId2,
                 oldDeliveryState = null,
-                newDeliveryState = Acknowledged,
+                newDeliveryState = ACKNOWLEDGED,
                 oldAppRecStatus = null,
                 newAppRecStatus = null
             )

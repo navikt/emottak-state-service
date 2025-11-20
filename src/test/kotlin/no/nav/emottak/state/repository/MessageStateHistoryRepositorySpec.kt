@@ -8,9 +8,9 @@ import io.kotest.matchers.string.shouldStartWith
 import io.kotest.matchers.types.shouldBeInstanceOf
 import no.nav.emottak.state.container
 import no.nav.emottak.state.database
-import no.nav.emottak.state.model.AppRecStatus.Ok
-import no.nav.emottak.state.model.ExternalDeliveryState.Acknowledged
-import no.nav.emottak.state.model.ExternalDeliveryState.Unconfirmed
+import no.nav.emottak.state.model.AppRecStatus.OK
+import no.nav.emottak.state.model.ExternalDeliveryState.ACKNOWLEDGED
+import no.nav.emottak.state.model.ExternalDeliveryState.UNCONFIRMED
 import no.nav.emottak.state.model.MessageType.DIALOG
 import org.jetbrains.exposed.v1.exceptions.ExposedSQLException
 import org.jetbrains.exposed.v1.jdbc.transactions.suspendTransaction
@@ -43,7 +43,7 @@ class MessageStateHistoryRepositorySpec : StringSpec(
                         messageStateHistoryRepository.append(
                             messageId = Uuid.random(),
                             oldDeliveryState = null,
-                            newDeliveryState = Acknowledged,
+                            newDeliveryState = ACKNOWLEDGED,
                             oldAppRecStatus = null,
                             newAppRecStatus = null,
                             changedAt = Clock.System.now()
@@ -78,7 +78,7 @@ class MessageStateHistoryRepositorySpec : StringSpec(
                     val history = messageStateHistoryRepository.append(
                         messageId = externalRefId,
                         oldDeliveryState = null,
-                        newDeliveryState = Unconfirmed,
+                        newDeliveryState = UNCONFIRMED,
                         oldAppRecStatus = null,
                         newAppRecStatus = null,
                         changedAt = occurredAt
@@ -89,7 +89,7 @@ class MessageStateHistoryRepositorySpec : StringSpec(
 
                     entry.messageId shouldBe externalRefId
                     entry.oldDeliveryState shouldBe null
-                    entry.newDeliveryState shouldBe Unconfirmed
+                    entry.newDeliveryState shouldBe UNCONFIRMED
                     entry.oldAppRecStatus shouldBe null
                     entry.newAppRecStatus shouldBe null
                 }
@@ -113,7 +113,7 @@ class MessageStateHistoryRepositorySpec : StringSpec(
                     messageStateHistoryRepository.append(
                         messageId = externalRefId,
                         oldDeliveryState = null,
-                        newDeliveryState = Unconfirmed,
+                        newDeliveryState = UNCONFIRMED,
                         oldAppRecStatus = null,
                         newAppRecStatus = null,
                         changedAt = now
@@ -122,8 +122,8 @@ class MessageStateHistoryRepositorySpec : StringSpec(
                     val next = Clock.System.now()
                     val history = messageStateHistoryRepository.append(
                         messageId = externalRefId,
-                        oldDeliveryState = Unconfirmed,
-                        newDeliveryState = Acknowledged,
+                        oldDeliveryState = UNCONFIRMED,
+                        newDeliveryState = ACKNOWLEDGED,
                         oldAppRecStatus = null,
                         newAppRecStatus = null,
                         changedAt = next
@@ -133,8 +133,8 @@ class MessageStateHistoryRepositorySpec : StringSpec(
 
                     val last = history.last()
                     last.messageId shouldBe externalRefId
-                    last.oldDeliveryState shouldBe Unconfirmed
-                    last.newDeliveryState shouldBe Acknowledged
+                    last.oldDeliveryState shouldBe UNCONFIRMED
+                    last.newDeliveryState shouldBe ACKNOWLEDGED
                     last.oldAppRecStatus shouldBe null
                     last.newAppRecStatus shouldBe null
                 }
@@ -168,7 +168,7 @@ class MessageStateHistoryRepositorySpec : StringSpec(
                     messageStateHistoryRepository.append(
                         externalRefId,
                         oldDeliveryState = null,
-                        newDeliveryState = Unconfirmed,
+                        newDeliveryState = UNCONFIRMED,
                         oldAppRecStatus = null,
                         newAppRecStatus = null,
                         changedAt = now
@@ -177,8 +177,8 @@ class MessageStateHistoryRepositorySpec : StringSpec(
                     val t2 = Clock.System.now()
                     messageStateHistoryRepository.append(
                         externalRefId,
-                        oldDeliveryState = Unconfirmed,
-                        newDeliveryState = Acknowledged,
+                        oldDeliveryState = UNCONFIRMED,
+                        newDeliveryState = ACKNOWLEDGED,
                         oldAppRecStatus = null,
                         newAppRecStatus = null,
                         changedAt = t2
@@ -187,10 +187,10 @@ class MessageStateHistoryRepositorySpec : StringSpec(
                     val t3 = Clock.System.now()
                     messageStateHistoryRepository.append(
                         messageId = externalRefId,
-                        oldDeliveryState = Acknowledged,
-                        newDeliveryState = Acknowledged,
+                        oldDeliveryState = ACKNOWLEDGED,
+                        newDeliveryState = ACKNOWLEDGED,
                         oldAppRecStatus = null,
-                        newAppRecStatus = Ok,
+                        newAppRecStatus = OK,
                         changedAt = t3
                     )
 

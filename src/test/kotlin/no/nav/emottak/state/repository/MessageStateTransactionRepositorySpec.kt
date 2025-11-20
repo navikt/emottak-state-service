@@ -5,7 +5,7 @@ import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 import no.nav.emottak.state.container
 import no.nav.emottak.state.database
-import no.nav.emottak.state.model.ExternalDeliveryState.Acknowledged
+import no.nav.emottak.state.model.ExternalDeliveryState.ACKNOWLEDGED
 import no.nav.emottak.state.model.MessageType.DIALOG
 import no.nav.emottak.state.shouldBeInstant
 import org.testcontainers.containers.PostgreSQLContainer
@@ -92,7 +92,7 @@ class MessageStateTransactionRepositorySpec : StringSpec(
                     messageType = DIALOG,
                     externalRefId = externalRefId,
                     oldDeliveryState = null,
-                    newDeliveryState = Acknowledged,
+                    newDeliveryState = ACKNOWLEDGED,
                     oldAppRecStatus = null,
                     newAppRecStatus = null,
                     occurredAt = now
@@ -104,7 +104,7 @@ class MessageStateTransactionRepositorySpec : StringSpec(
 
                 entry.messageId shouldBe externalRefId
                 entry.oldDeliveryState shouldBe null
-                entry.newDeliveryState shouldBe Acknowledged
+                entry.newDeliveryState shouldBe ACKNOWLEDGED
 
                 entry.oldAppRecStatus shouldBe null
                 entry.newAppRecStatus shouldBe null

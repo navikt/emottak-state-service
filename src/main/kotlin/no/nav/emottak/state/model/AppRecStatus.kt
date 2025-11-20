@@ -1,7 +1,7 @@
 package no.nav.emottak.state.model
 
 enum class AppRecStatus {
-    Ok,
-    OkErrorInMessagePart,
-    Rejected
+    OK,
+    OK_ERROR_IN_MESSAGE_PART,
+    REJECTED
 }
