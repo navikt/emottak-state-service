@@ -38,18 +38,18 @@ class MessageRepositorySpec : StringSpec(
             container.start()
         }
 
-        "Create - no existing message" {
+        "Create state - no existing message" {
             resourceScope {
                 val database = database(container.jdbcUrl)
 
                 suspendTransaction(database) {
-                    val repo = ExposedMessageRepository(database)
+                    val messageRepository = ExposedMessageRepository(database)
 
                     val externalRefId = Uuid.random()
                     val externalMessageUrl = URI.create(MESSAGE1).toURL()
                     val now = Clock.System.now()
 
-                    val state = repo.createState(
+                    val state = messageRepository.createState(
                         messageType = DIALOG,
                         externalRefId = externalRefId,
                         externalMessageUrl = externalMessageUrl,
@@ -67,7 +67,7 @@ class MessageRepositorySpec : StringSpec(
             }
         }
 
-        "Update external state - existing message" {
+        "Update state - existing message" {
             resourceScope {
                 val database = database(container.jdbcUrl)
 
@@ -214,7 +214,7 @@ class MessageRepositorySpec : StringSpec(
             }
         }
 
-        "Find for polling - null last polled at messages are included" {
+        "Find for polling - messages with null for last polled at are included" {
             resourceScope {
                 val database = database(container.jdbcUrl)
 
@@ -239,7 +239,7 @@ class MessageRepositorySpec : StringSpec(
             }
         }
 
-        "Mark Polled - updates only selected id's" {
+        "Mark polled - update only selected id's" {
             resourceScope {
                 val database = database(container.jdbcUrl)
 

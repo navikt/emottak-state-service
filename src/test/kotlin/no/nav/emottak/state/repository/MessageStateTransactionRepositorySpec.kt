@@ -27,7 +27,7 @@ class MessageStateTransactionRepositorySpec : StringSpec(
             container.start()
         }
 
-        "Record state change – initial creation has null external states" {
+        "Create initial state – all external states are null" {
             resourceScope {
                 val database = database(container.jdbcUrl)
 
@@ -71,7 +71,7 @@ class MessageStateTransactionRepositorySpec : StringSpec(
             }
         }
 
-        "Record state change – with previous transactions" {
+        "Record state change – with previous initial state" {
             resourceScope {
                 val database = database(container.jdbcUrl)
 

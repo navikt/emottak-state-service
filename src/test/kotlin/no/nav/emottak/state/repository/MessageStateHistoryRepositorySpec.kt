@@ -141,7 +141,7 @@ class MessageStateHistoryRepositorySpec : StringSpec(
             }
         }
 
-        "Find all – empty" {
+        "Find all – returns empty list" {
             resourceScope {
                 val database = database(container.jdbcUrl)
                 val messageStateHistoryRepository = ExposedMessageStateHistoryRepository(database)

@@ -93,7 +93,7 @@ class MessageStateServiceSpec : StringSpec(
             messageStateService.getMessageSnapshot(Uuid.random()).shouldBeNull()
         }
 
-        "Find pollable messages – returns only messages with externalDeliveryState == null" {
+        "Find pollable messages – returns only messages with external delivery state null" {
             val messageStateService = transactionalMessageStateService()
 
             val externalRefId1 = Uuid.random()
@@ -135,7 +135,7 @@ class MessageStateServiceSpec : StringSpec(
             result.first().externalRefId shouldBe externalRefId1
         }
 
-        "Mark as polled – updates lastPolledAt only for selected messages" {
+        "Mark as polled – updates last polled at only for selected messages" {
             val messageStateService = transactionalMessageStateService()
 
             val externalRefId1 = Uuid.random()
