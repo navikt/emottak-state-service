@@ -2,13 +2,22 @@ package no.nav.emottak.state.config
 
 import com.sksamuel.hoplite.Masked
 import kotlinx.serialization.Serializable
+import no.nav.emottak.utils.config.Kafka
 import java.util.Properties
 import kotlin.time.Duration
 
 data class Config(
     val server: Server,
     val poller: Poller,
+    val kafka: Kafka,
+    val kafkaTopics: KafkaTopics,
     val database: Database
+)
+
+fun Config.withKafka(update: Kafka.() -> Kafka) = copy(kafka = kafka.update())
+
+data class KafkaTopics(
+    val messagesOutTopic: String
 )
 
 data class Server(
