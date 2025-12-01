@@ -68,18 +68,51 @@ The `StateTransitionValidator` ensures transitions follow defined business rules
 
 Valid transitions include:
 
-- `NEW → PENDING`
-- `PENDING → COMPLETED`
-- `PENDING → REJECTED`
-- `NEW → REJECTED`
-- `COMPLETED → COMPLETED` (idempotent)
+### 🧠 Transition Matrix
+
+| **From ↓ / To →** | **NEW** | **PENDING** | **COMPLETED** | **REJECTED** | **INVALID** |
+|-------------------|---------|-------------|---------------|--------------|-------------|
+| **NEW**           | =       | ✔           | ❌            | ✔            | ❌          |
+| **PENDING**       | ❌      | =           | ✔             | ✔            | ❌          |
+| **COMPLETED** 🚫  | ❌      | ❌          | =             | ❌           | ❌          |
+| **REJECTED** 🚫   | ❌      | ❌          | ❌            | =            | ❌          |
+| **INVALID** 🚫    | ❌      | ❌          | ❌            | ❌           | =           |
+
+---
+
+### ✔ Notes on Specific States
+
+#### NEW → PENDING
+Occurs when the external system acknowledges receiving the message.
+
+#### NEW → REJECTED
+Represents an immediate negative outcome before processing begins.
+
+#### PENDING → COMPLETED
+Standard success path once AppRec is OK or partially OK.
+
+#### PENDING → REJECTED
+Negative completion scenario.
+
+#### COMPLETED → COMPLETED
+Idempotent.  
+The poller may observe the same resolved state multiple times.
+
+#### REJECTED → REJECTED
+Idempotent; failure terminal state.
+
+#### INVALID → INVALID
+Idempotent; indicates inconsistent or contradictory external state.
+
+---
 
 Invalid transitions include:
 
 - `PENDING → NEW`
 - `COMPLETED → PENDING`
-- transitions out of `REJECTED`
-- transitions out of `INVALID`
+- `COMPLETED → REJECTED`
+- Any transition **out** of `REJECTED`
+- Any transition **out** of `INVALID`
 
 Illegal transitions raise `IllegalTransition`, and no state is persisted.
 
