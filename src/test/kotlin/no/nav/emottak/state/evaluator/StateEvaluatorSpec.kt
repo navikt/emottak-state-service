@@ -25,43 +25,43 @@ class StateEvaluatorSpec : StringSpec(
             } shouldBe Right(NEW)
         }
 
-        "ACK + null → PENDING" {
+        "ACK delivery + null apprec → PENDING" {
             either {
                 with(evaluator) { evaluate(ACKNOWLEDGED, null) }
             } shouldBe Right(PENDING)
         }
 
-        "UNCONFIRMED + null → PENDING" {
+        "UNCONFIRMED delivery + null apprec → PENDING" {
             either {
                 with(evaluator) { evaluate(UNCONFIRMED, null) }
             } shouldBe Right(PENDING)
         }
 
-        "ACK + AppRec OK → COMPLETED" {
+        "ACK delivery + OK apprec → COMPLETED" {
             either {
                 with(evaluator) { evaluate(ACKNOWLEDGED, AppRecStatus.OK) }
             } shouldBe Right(COMPLETED)
         }
 
-        "ACK + AppRec OK_ERROR_IN_MESSAGE_PART → COMPLETED" {
+        "ACK delivery + OK_ERROR_IN_MESSAGE_PART apprec → COMPLETED" {
             either {
                 with(evaluator) { evaluate(ACKNOWLEDGED, AppRecStatus.OK_ERROR_IN_MESSAGE_PART) }
             } shouldBe Right(COMPLETED)
         }
 
-        "ACK + AppRec REJECTED → REJECTED" {
+        "ACK delivery + REJECTED apprec → REJECTED" {
             either {
                 with(evaluator) { evaluate(ACKNOWLEDGED, AppRecStatus.REJECTED) }
             } shouldBe Right(REJECTED)
         }
 
-        "REJECTED + null → REJECTED" {
+        "REJECTED delivery + null apprec → REJECTED" {
             either {
                 with(evaluator) { evaluate(ExternalDeliveryState.REJECTED, null) }
             } shouldBe Right(REJECTED)
         }
 
-        "UNCONFIRMED + AppRec OK → Unresolvable" {
+        "UNCONFIRMED delivery + OK apprec → Unresolvable" {
             val result = either {
                 with(evaluator) { evaluate(UNCONFIRMED, AppRecStatus.OK) }
             }
@@ -69,7 +69,7 @@ class StateEvaluatorSpec : StringSpec(
             result shouldBeEitherLeftWhere { it is StateEvaluationError.UnresolvableState }
         }
 
-        "UNCONFIRMED + AppRec REJECTED → Unresolvable" {
+        "UNCONFIRMED delivery + REJECTED apprec → Unresolvable" {
             val result = either {
                 with(evaluator) { evaluate(UNCONFIRMED, AppRecStatus.REJECTED) }
             }
@@ -77,7 +77,7 @@ class StateEvaluatorSpec : StringSpec(
             result shouldBeEitherLeftWhere { it is StateEvaluationError.UnresolvableState }
         }
 
-        "null + AppRec OK → Unresolvable" {
+        "null delivery + OK apprec → Unresolvable" {
             val result = either {
                 with(evaluator) { evaluate(null, AppRecStatus.OK) }
             }
@@ -85,7 +85,7 @@ class StateEvaluatorSpec : StringSpec(
             result shouldBeEitherLeftWhere { it is StateEvaluationError.UnresolvableState }
         }
 
-        "null + AppRec REJECTED → Unresolvable" {
+        "null delivery + REJECTED apprec → Unresolvable" {
             val result = either {
                 with(evaluator) { evaluate(null, AppRecStatus.REJECTED) }
             }
