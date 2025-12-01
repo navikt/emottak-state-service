@@ -6,6 +6,17 @@ import no.nav.emottak.state.StateEvaluationError.UnresolvableState
 import no.nav.emottak.state.model.AppRecStatus
 import no.nav.emottak.state.model.ExternalDeliveryState
 import no.nav.emottak.state.model.MessageDeliveryState
+import no.nav.emottak.state.model.MessageDeliveryState.COMPLETED
+import no.nav.emottak.state.model.MessageDeliveryState.NEW
+import no.nav.emottak.state.model.MessageDeliveryState.PENDING
+import no.nav.emottak.state.model.MessageDeliveryState.REJECTED
+import no.nav.emottak.state.model.isAcknowledged
+import no.nav.emottak.state.model.isNotNull
+import no.nav.emottak.state.model.isNull
+import no.nav.emottak.state.model.isOk
+import no.nav.emottak.state.model.isOkErrorInMessagePart
+import no.nav.emottak.state.model.isRejected
+import no.nav.emottak.state.model.isUnconfirmed
 
 /**
  * Evaluates the internal {@link MessageDeliveryState} based on the raw external inputs
@@ -64,35 +75,21 @@ class StateEvaluator {
         externalDeliveryState: ExternalDeliveryState?,
         appRecStatus: AppRecStatus?
     ): MessageDeliveryState = when {
-        externalDeliveryState == null && appRecStatus == null ->
-            MessageDeliveryState.NEW
+        externalDeliveryState.isNull() && appRecStatus.isNull() -> NEW
+        externalDeliveryState.isRejected() -> REJECTED
+        externalDeliveryState.isUnconfirmed() && appRecStatus.isNotNull() -> raise(
+            UnresolvableState(
+                externalDeliveryState,
+                appRecStatus
+            )
+        )
 
-        externalDeliveryState == ExternalDeliveryState.REJECTED ->
-            MessageDeliveryState.REJECTED
+        externalDeliveryState.isAcknowledged() &&
+            (appRecStatus.isOk() || appRecStatus.isOkErrorInMessagePart()) -> COMPLETED
 
-        externalDeliveryState == ExternalDeliveryState.UNCONFIRMED &&
-            appRecStatus != null ->
-            raise(UnresolvableState(externalDeliveryState, appRecStatus))
-
-        externalDeliveryState == ExternalDeliveryState.ACKNOWLEDGED &&
-            (
-                appRecStatus == AppRecStatus.OK ||
-                    appRecStatus == AppRecStatus.OK_ERROR_IN_MESSAGE_PART
-                ) ->
-            MessageDeliveryState.COMPLETED
-
-        externalDeliveryState == ExternalDeliveryState.ACKNOWLEDGED &&
-            appRecStatus == AppRecStatus.REJECTED ->
-            MessageDeliveryState.REJECTED
-
-        externalDeliveryState == ExternalDeliveryState.ACKNOWLEDGED &&
-            appRecStatus == null ->
-            MessageDeliveryState.PENDING
-
-        externalDeliveryState == ExternalDeliveryState.UNCONFIRMED &&
-            appRecStatus == null ->
-            MessageDeliveryState.PENDING
-
+        externalDeliveryState.isAcknowledged() && appRecStatus.isRejected() -> REJECTED
+        externalDeliveryState.isAcknowledged() && appRecStatus.isNull() -> PENDING
+        externalDeliveryState.isUnconfirmed() && appRecStatus.isNull() -> PENDING
         else -> raise(UnresolvableState(externalDeliveryState, appRecStatus))
     }
 }
