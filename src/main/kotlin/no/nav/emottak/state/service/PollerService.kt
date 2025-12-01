@@ -57,15 +57,17 @@ class PollerService(
     internal suspend fun pollAndProcessMessage(message: MessageState) = with(stateEvaluatorService) {
         val externalRefId = message.externalRefId
         val (externalStatuses, error) = ediAdapterClient.getMessageStatus(externalRefId)
-        println("Statuses: $externalStatuses")
         val externalStatus = externalStatuses!!.last()
 
-        val nextState = determineNextState(message, externalStatus.deliveryState, externalStatus.appRecStatus)
+        val deliveryState = externalStatus.deliveryState
+        val appRecStatus = externalStatus.appRecStatus
+
+        val nextState = determineNextState(message, deliveryState, appRecStatus)
         when (nextState) {
             NEW -> log.debug { message.formatUnchanged(NEW) }
-            PENDING -> pending(message, externalStatus.deliveryState, externalStatus.appRecStatus)
-            COMPLETED -> completed(message, externalStatus.deliveryState, externalStatus.appRecStatus)
-            REJECTED -> rejected(message, externalStatus.deliveryState, externalStatus.appRecStatus)
+            PENDING -> pending(message, deliveryState, appRecStatus)
+            COMPLETED -> completed(message, deliveryState, appRecStatus)
+            REJECTED -> rejected(message, deliveryState, appRecStatus)
             INVALID -> log.error { message.formatInvalidState() }
         }
     }
