@@ -18,7 +18,7 @@ data class Config(
 fun Config.withKafka(update: Kafka.() -> Kafka) = copy(kafka = kafka.update())
 
 data class KafkaTopics(
-    val messagesOutTopic: String
+    val messagesInTopic: String
 )
 
 data class Poller(
