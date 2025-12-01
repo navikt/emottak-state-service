@@ -14,7 +14,7 @@ class MessageReceiver(
     private val kafka = config().kafkaTopics
 
     fun receiveMessages(): Flow<DialogMessage> = kafkaReceiver
-        .receive(kafka.messagesInTopic)
+        .receive(kafka.messageInTopic)
         .map(::toMessage)
 
     private suspend fun toMessage(record: ReceiverRecord<String, ByteArray>): DialogMessage {
