@@ -5,14 +5,15 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.onEach
+import kotlinx.serialization.json.Json
 import no.nav.emottak.state.integration.ediadapter.EdiAdapterClient
 import no.nav.emottak.state.model.CreateState
 import no.nav.emottak.state.model.DialogMessage
 import no.nav.emottak.state.model.MessageType.DIALOG
+import no.nav.emottak.state.model.PostMessageResponse
 import no.nav.emottak.state.receiver.MessageReceiver
 import no.nav.emottak.state.service.MessageStateService
 import java.net.URI
-import kotlin.uuid.Uuid
 
 private val log = KotlinLogging.logger {}
 
@@ -29,13 +30,14 @@ class MessageProcessor(
     private fun messageFlow(): Flow<DialogMessage> =
         messageReceiver.receiveMessages()
 
-    private suspend fun processAndSendMessage(dialogMessage: DialogMessage) {
-        val uuid = ediAdapterClient.postMessage(dialogMessage)
+    internal suspend fun processAndSendMessage(dialogMessage: DialogMessage) {
+        val json = ediAdapterClient.postMessage(dialogMessage)
+        val messageResponse = Json.decodeFromString<PostMessageResponse>(json)
 
         val createState = CreateState(
             messageType = DIALOG,
-            externalRefId = Uuid.parse(uuid),
-            externalMessageUrl = URI.create("nhn/$uuid").toURL()
+            externalRefId = messageResponse.id,
+            externalMessageUrl = URI.create(messageResponse.url).toURL()
         )
 
         messageStateService.createInitialState(createState)
