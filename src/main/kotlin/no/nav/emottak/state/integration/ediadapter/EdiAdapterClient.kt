@@ -1,6 +1,6 @@
 package no.nav.emottak.state.integration.ediadapter
 
-import io.ktor.client.*
+import io.ktor.client.HttpClient
 import no.nav.emottak.state.model.DialogMessage
 import no.nav.emottak.state.model.PostMessageResponse
 import kotlin.uuid.Uuid
