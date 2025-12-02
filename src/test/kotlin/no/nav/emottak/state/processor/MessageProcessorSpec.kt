@@ -11,7 +11,7 @@ import no.nav.emottak.state.integration.ediadapter.FakeEdiAdapterClient
 import no.nav.emottak.state.model.DialogMessage
 import no.nav.emottak.state.model.PostMessageResponse
 import no.nav.emottak.state.receiver.MessageReceiver
-import no.nav.emottak.state.service.transactionalMessageStateService
+import no.nav.emottak.state.service.FakeTransactionalMessageStateService
 import org.apache.kafka.common.serialization.ByteArrayDeserializer
 import org.apache.kafka.common.serialization.StringDeserializer
 import kotlin.uuid.Uuid
@@ -23,7 +23,7 @@ class MessageProcessorSpec : StringSpec(
             val uuid = Uuid.random()
             val url = "https://example.com/messages/1"
             val messageResponse = PostMessageResponse(uuid, url)
-            val messageStateService = transactionalMessageStateService()
+            val messageStateService = FakeTransactionalMessageStateService()
             val messageProcessor = MessageProcessor(
                 dummyMessageReceiver(),
                 messageStateService,
