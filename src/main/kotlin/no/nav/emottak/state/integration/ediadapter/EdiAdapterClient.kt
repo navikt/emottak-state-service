@@ -16,7 +16,7 @@ class EdiAdapterClientImpl(
     }
 }
 
-class FakeEdiAdapterClient : EdiAdapterClient {
+open class FakeEdiAdapterClient : EdiAdapterClient {
     override suspend fun postMessage(dialogMessage: DialogMessage): String {
         return ""
     }

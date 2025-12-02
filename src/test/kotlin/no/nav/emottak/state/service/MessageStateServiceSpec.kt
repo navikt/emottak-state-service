@@ -170,7 +170,7 @@ class MessageStateServiceSpec : StringSpec(
     }
 )
 
-private fun transactionalMessageStateService(): TransactionalMessageStateService {
+fun transactionalMessageStateService(): TransactionalMessageStateService {
     val messageRepository = FakeMessageRepository()
     val historyRepository = FakeMessageStateHistoryRepository()
     val txRepository = FakeMessageStateTransactionRepository(

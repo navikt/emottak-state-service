@@ -33,10 +33,8 @@ class MessageReceiverSpec : KafkaSpec(
             resourceScope {
                 turbineScope {
                     val publisher = KafkaPublisher(publisherSettings())
-
                     val referenceId = Uuid.random()
                     val content = "data".toByteArray()
-
                     publisher.publishScope {
                         publish(
                             ProducerRecord(
