@@ -8,7 +8,10 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import no.nav.emottak.state.container
 import no.nav.emottak.state.database
+import no.nav.emottak.state.model.AppRecStatus
 import no.nav.emottak.state.model.ExternalDeliveryState.ACKNOWLEDGED
+import no.nav.emottak.state.model.ExternalDeliveryState.REJECTED
+import no.nav.emottak.state.model.ExternalDeliveryState.UNCONFIRMED
 import no.nav.emottak.state.model.MessageType.DIALOG
 import no.nav.emottak.state.repository.Messages.externalRefId
 import no.nav.emottak.state.repository.Messages.lastPolledAt
@@ -27,6 +30,8 @@ import kotlin.uuid.Uuid
 private const val MESSAGE1 = "http://exmaple.com/messages/1"
 private const val MESSAGE2 = "http://exmaple.com/messages/2"
 private const val MESSAGE3 = "http://exmaple.com/messages/3"
+private const val MESSAGE4 = "http://exmaple.com/messages/4"
+private const val MESSAGE5 = "http://exmaple.com/messages/5"
 
 class MessageRepositorySpec : StringSpec(
     {
@@ -154,7 +159,7 @@ class MessageRepositorySpec : StringSpec(
             }
         }
 
-        "Find for polling - only messages with external delivery state not set" {
+        "Find for polling - only messages with NULL, ACKNOWLEDGED, or UNCONFIRMED delivery state" {
             resourceScope {
                 val database = database(container.jdbcUrl)
 
@@ -167,6 +172,13 @@ class MessageRepositorySpec : StringSpec(
                         URI.create(MESSAGE1).toURL(),
                         Clock.System.now()
                     )
+
+                    messageRepository.createState(
+                        DIALOG,
+                        Uuid.random(),
+                        URI.create(MESSAGE2).toURL(),
+                        Clock.System.now()
+                    )
                         .also {
                             Messages.update({ externalRefId eq it.externalRefId }) { row ->
                                 row[externalDeliveryState] = ACKNOWLEDGED
@@ -176,11 +188,40 @@ class MessageRepositorySpec : StringSpec(
                     messageRepository.createState(
                         DIALOG,
                         Uuid.random(),
-                        URI.create(MESSAGE2).toURL(),
+                        URI.create(MESSAGE3).toURL(),
                         Clock.System.now()
                     )
+                        .also {
+                            Messages.update({ externalRefId eq it.externalRefId }) { row ->
+                                row[externalDeliveryState] = UNCONFIRMED
+                            }
+                        }
 
-                    messageRepository.findForPolling().size shouldBe 1
+                    messageRepository.createState(
+                        DIALOG,
+                        Uuid.random(),
+                        URI.create(MESSAGE4).toURL(),
+                        Clock.System.now()
+                    ).also {
+                        Messages.update({ externalRefId eq it.externalRefId }) { row ->
+                            row[externalDeliveryState] = ACKNOWLEDGED
+                            row[appRecStatus] = AppRecStatus.OK
+                        }
+                    }
+
+                    messageRepository.createState(
+                        DIALOG,
+                        Uuid.random(),
+                        URI.create(MESSAGE5).toURL(),
+                        Clock.System.now()
+                    )
+                        .also {
+                            Messages.update({ externalRefId eq it.externalRefId }) { row ->
+                                row[externalDeliveryState] = REJECTED
+                            }
+                        }
+
+                    messageRepository.findForPolling().size shouldBe 3
                 }
             }
         }
