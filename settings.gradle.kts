@@ -120,6 +120,14 @@ dependencyResolutionManagement {
                 password = System.getenv("GITHUB_TOKEN")
             }
         }
+        maven {
+            name = "EDI Adapter Client"
+            url = uri("https://maven.pkg.github.com/navikt/emottak-edi-adapter")
+            credentials {
+                username = "token"
+                password = System.getenv("GITHUB_TOKEN")
+            }
+        }
     }
 }
 
