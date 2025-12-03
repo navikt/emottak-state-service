@@ -67,21 +67,28 @@ interface MessageStateService {
     /**
      * Finds messages that are candidates for polling against the external system.
      *
-     * A message is considered pollable when no external delivery state has been recorded yet
-     * (i.e., `externalDeliveryState` is `null`). These messages require periodic polling so
-     * the system can obtain their initial delivery and processing information from the remote
-     * API.
+     * A message is considered *pollable* when:
      *
-     * Only messages that have not been polled recently are included. This is determined by
-     * comparing each message’s `lastPolledAt` timestamp against the configured minimum polling
-     * interval (see [PollerConfig.minAgeSeconds]).
+     * 1. Its external delivery state indicates that processing is still in progress:
+     *    - `externalDeliveryState` is `null` (initial NEW state), or
+     *    - `externalDeliveryState` is `ACKNOWLEDGED` or `UNCONFIRMED` (PENDING states).
      *
-     * To avoid excessive polling load, the number of returned messages is limited by the
-     * configured fetch limit (see [PollerConfig.fetchLimit]).
+     * 2. No application-level receipt has been recorded yet (`appRecStatus` is `null`).
+     *    This ensures that messages in terminal states such as `COMPLETED` or `REJECTED`
+     *    are **never** polled again.
+     *
+     * 3. The message has either never been polled before (`lastPolledAt` is `null`),
+     *    or the last poll occurred sufficiently long ago, as determined by
+     *    [PollerConfig.minAgeSeconds]. This throttling prevents excessive repeated polling
+     *    of the same in-progress messages.
+     *
+     * The result set is additionally constrained by the configured fetch limit
+     * ([PollerConfig.fetchLimit]) to balance polling throughput and load on both
+     * this service and the external system.
      *
      * Default configuration values:
-     * - `minAgeSeconds`: 30 seconds — a message must be at least this old since it was last polled
-     * - `fetchLimit`: 100 messages — the maximum number of messages fetched per polling cycle
+     * - `minAgeSeconds`: 30 seconds — a message must be at least this old since it was last polled.
+     * - `fetchLimit`: 100 messages — the maximum number of messages processed per polling cycle.
      *
      * These defaults can be overridden through application configuration or environment variables.
      *
