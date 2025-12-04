@@ -3,8 +3,12 @@ package no.nav.emottak.state.repository
 import no.nav.emottak.state.config
 import no.nav.emottak.state.model.AppRecStatus
 import no.nav.emottak.state.model.ExternalDeliveryState
+import no.nav.emottak.state.model.ExternalDeliveryState.ACKNOWLEDGED
+import no.nav.emottak.state.model.ExternalDeliveryState.UNCONFIRMED
 import no.nav.emottak.state.model.MessageState
 import no.nav.emottak.state.model.MessageType
+import no.nav.emottak.state.repository.Messages.appRecStatus
+import no.nav.emottak.state.repository.Messages.externalDeliveryState
 import no.nav.emottak.state.repository.Messages.lastPolledAt
 import no.nav.emottak.state.util.UrlTransformer
 import no.nav.emottak.state.util.UuidTransformer
@@ -125,11 +129,12 @@ class ExposedMessageRepository(private val database: Database) : MessageReposito
         Messages
             .selectAll()
             .where {
-                (Messages.externalDeliveryState.isNull()) and
-                    (
-                        (lastPolledAt.isNull())
-                            or lastPolledAt.olderThanSeconds(poller.minAgeSeconds)
-                        )
+                (
+                    externalDeliveryState.isNull() or
+                        externalDeliveryState.inList(listOf(ACKNOWLEDGED, UNCONFIRMED))
+                    ) and
+                    appRecStatus.isNull() and
+                    (lastPolledAt.isNull() or lastPolledAt.olderThanSeconds(poller.minAgeSeconds))
             }
             .orderBy(lastPolledAt to ASC_NULLS_FIRST)
             .limit(poller.fetchLimit)
@@ -147,8 +152,8 @@ class ExposedMessageRepository(private val database: Database) : MessageReposito
         this[Messages.messageType],
         this[Messages.externalRefId],
         this[Messages.externalMessageUrl],
-        this[Messages.externalDeliveryState],
-        this[Messages.appRecStatus],
+        this[externalDeliveryState],
+        this[appRecStatus],
         this[Messages.lastStateChange],
         this[lastPolledAt],
         this[Messages.createdAt],
