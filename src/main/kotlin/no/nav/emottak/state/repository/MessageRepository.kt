@@ -7,6 +7,9 @@ import no.nav.emottak.state.model.ExternalDeliveryState.ACKNOWLEDGED
 import no.nav.emottak.state.model.ExternalDeliveryState.UNCONFIRMED
 import no.nav.emottak.state.model.MessageState
 import no.nav.emottak.state.model.MessageType
+import no.nav.emottak.state.model.isAcknowledged
+import no.nav.emottak.state.model.isNull
+import no.nav.emottak.state.model.isUnconfirmed
 import no.nav.emottak.state.repository.Messages.appRecStatus
 import no.nav.emottak.state.repository.Messages.externalDeliveryState
 import no.nav.emottak.state.repository.Messages.lastPolledAt
@@ -162,6 +165,8 @@ class ExposedMessageRepository(private val database: Database) : MessageReposito
 }
 
 class FakeMessageRepository : MessageRepository {
+    private val poller = config().poller
+
     private val messages = HashMap<Uuid, MessageState>()
 
     override suspend fun createState(
@@ -207,8 +212,19 @@ class FakeMessageRepository : MessageRepository {
 
     override suspend fun findForPolling(): List<MessageState> =
         messages.values
-            .filter { it.externalDeliveryState == null }
-            .take(100)
+            .filter { message ->
+                (
+                    message.externalDeliveryState.isNull() ||
+                        message.externalDeliveryState.isAcknowledged() ||
+                        message.externalDeliveryState.isUnconfirmed()
+                    ) &&
+                    message.appRecStatus.isNull() &&
+                    (
+                        message.lastPolledAt == null ||
+                            message.lastPolledAt.plus(poller.minAgeSeconds) < Clock.System.now()
+                        )
+            }
+            .take(poller.fetchLimit)
 
     override suspend fun markPolled(externalRefIds: List<Uuid>): Int {
         val now = Clock.System.now()

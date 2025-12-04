@@ -1,11 +1,15 @@
 package no.nav.emottak.state.service
 
 import io.kotest.core.spec.style.StringSpec
+import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
+import no.nav.emottak.state.model.AppRecStatus.OK
 import no.nav.emottak.state.model.CreateState
 import no.nav.emottak.state.model.ExternalDeliveryState.ACKNOWLEDGED
+import no.nav.emottak.state.model.ExternalDeliveryState.REJECTED
+import no.nav.emottak.state.model.ExternalDeliveryState.UNCONFIRMED
 import no.nav.emottak.state.model.MessageType.DIALOG
 import no.nav.emottak.state.model.UpdateState
 import no.nav.emottak.state.repository.FakeMessageRepository
@@ -14,8 +18,11 @@ import no.nav.emottak.state.repository.FakeMessageStateTransactionRepository
 import java.net.URI
 import kotlin.uuid.Uuid
 
-private const val MESSAGE1 = "http://exmaple.com/messages/1"
-private const val MESSAGE2 = "http://exmaple.com/messages/2"
+private const val MESSAGE1 = "http://example.com/messages/1"
+private const val MESSAGE2 = "http://example.com/messages/2"
+private const val MESSAGE3 = "http://example.com/messages/3"
+private const val MESSAGE4 = "http://example.com/messages/4"
+private const val MESSAGE5 = "http://example.com/messages/5"
 
 class MessageStateServiceSpec : StringSpec(
     {
@@ -93,7 +100,7 @@ class MessageStateServiceSpec : StringSpec(
             messageStateService.getMessageSnapshot(Uuid.random()).shouldBeNull()
         }
 
-        "Find pollable messages – returns only messages with external delivery state null" {
+        "Find pollable messages – only messages with NULL, ACKNOWLEDGED or UNCONFIRMED delivery state" {
             val messageStateService = transactionalMessageStateService()
 
             val externalRefId1 = Uuid.random()
@@ -102,7 +109,16 @@ class MessageStateServiceSpec : StringSpec(
             val externalRefId2 = Uuid.random()
             val externalMessageUrl2 = URI(MESSAGE2).toURL()
 
-            messageStateService.createInitialState(
+            val externalRefId3 = Uuid.random()
+            val externalMessageUrl3 = URI(MESSAGE3).toURL()
+
+            val externalRefId4 = Uuid.random()
+            val externalMessageUrl4 = URI(MESSAGE4).toURL()
+
+            val externalRefId5 = Uuid.random()
+            val externalMessageUrl5 = URI(MESSAGE5).toURL()
+
+            val nullSnapshot = messageStateService.createInitialState(
                 CreateState(
                     messageType = DIALOG,
                     externalRefId = externalRefId1,
@@ -118,7 +134,31 @@ class MessageStateServiceSpec : StringSpec(
                 )
             )
 
-            messageStateService.recordStateChange(
+            messageStateService.createInitialState(
+                CreateState(
+                    messageType = DIALOG,
+                    externalRefId = externalRefId3,
+                    externalMessageUrl = externalMessageUrl3
+                )
+            )
+
+            messageStateService.createInitialState(
+                CreateState(
+                    messageType = DIALOG,
+                    externalRefId = externalRefId4,
+                    externalMessageUrl = externalMessageUrl4
+                )
+            )
+
+            messageStateService.createInitialState(
+                CreateState(
+                    messageType = DIALOG,
+                    externalRefId = externalRefId5,
+                    externalMessageUrl = externalMessageUrl5
+                )
+            )
+
+            val acknowledgedSnapshot = messageStateService.recordStateChange(
                 UpdateState(
                     messageType = DIALOG,
                     externalRefId = externalRefId2,
@@ -129,10 +169,45 @@ class MessageStateServiceSpec : StringSpec(
                 )
             )
 
-            val result = messageStateService.findPollableMessages()
+            messageStateService.recordStateChange(
+                UpdateState(
+                    messageType = DIALOG,
+                    externalRefId = externalRefId3,
+                    oldDeliveryState = null,
+                    newDeliveryState = ACKNOWLEDGED,
+                    oldAppRecStatus = null,
+                    newAppRecStatus = OK
+                )
+            )
 
-            result.size shouldBe 1
-            result.first().externalRefId shouldBe externalRefId1
+            val unconfirmedSnapshot = messageStateService.recordStateChange(
+                UpdateState(
+                    messageType = DIALOG,
+                    externalRefId = externalRefId4,
+                    oldDeliveryState = null,
+                    newDeliveryState = UNCONFIRMED,
+                    oldAppRecStatus = null,
+                    newAppRecStatus = null
+                )
+            )
+
+            messageStateService.recordStateChange(
+                UpdateState(
+                    messageType = DIALOG,
+                    externalRefId = externalRefId5,
+                    oldDeliveryState = null,
+                    newDeliveryState = REJECTED,
+                    oldAppRecStatus = null,
+                    newAppRecStatus = null
+                )
+            )
+
+            val messages = messageStateService.findPollableMessages()
+
+            messages.size shouldBe 3
+            messages shouldContain nullSnapshot.messageState
+            messages shouldContain acknowledgedSnapshot.messageState
+            messages shouldContain unconfirmedSnapshot.messageState
         }
 
         "Mark as polled – updates last polled at only for selected messages" {
