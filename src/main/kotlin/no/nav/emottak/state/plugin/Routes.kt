@@ -10,6 +10,7 @@ import io.ktor.server.routing.route
 import io.ktor.server.routing.routing
 import io.micrometer.prometheus.PrometheusMeterRegistry
 import no.nav.emottak.ediadapter.client.EdiAdapterClient
+import no.nav.emottak.ediadapter.client.scopedAuthHttpClient
 import no.nav.emottak.ediadapter.model.AppRecError
 import no.nav.emottak.ediadapter.model.AppRecStatus
 import no.nav.emottak.ediadapter.model.EbXmlInfo
@@ -17,7 +18,6 @@ import no.nav.emottak.ediadapter.model.GetMessagesRequest
 import no.nav.emottak.ediadapter.model.OrderBy
 import no.nav.emottak.ediadapter.model.PostAppRecRequest
 import no.nav.emottak.ediadapter.model.PostMessageRequest
-import no.nav.emottak.ediadapter.client.scopedAuthHttpClient
 import org.slf4j.LoggerFactory
 import kotlin.uuid.Uuid
 
