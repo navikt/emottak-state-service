@@ -28,6 +28,8 @@ dependencyResolutionManagement {
             version("prometheus", "1.12.4")
             version("logback", "1.4.11")
             version("logstash", "7.4")
+            version("edi-adapter-client", "0.0.2-SNAPSHOT")
+            version("edi-adapter-model", "0.0.2-SNAPSHOT")
 
             library("arrow-core", "io.arrow-kt", "arrow-core").versionRef("arrow")
             library("arrow-functions", "io.arrow-kt", "arrow-functions").versionRef("arrow")
@@ -71,6 +73,9 @@ dependencyResolutionManagement {
 
             library("ktor-server-auth-jvm", "io.ktor", "ktor-server-auth-jvm").versionRef("ktor")
             library("token-validation-ktor-v3", "no.nav.security", "token-validation-ktor-v3").versionRef("token-validation-ktor")
+
+            library("edi-adapter-client", "no.nav.emottak", "edi-adapter-client").versionRef("edi-adapter-client")
+            library("edi-adapter-model", "no.nav.emottak", "edi-adapter-model").versionRef("edi-adapter-model")
 
             bundle("prometheus", listOf("ktor-server-metrics-micrometer", "micrometer-registry-prometheus"))
             bundle("logging", listOf("logback-classic", "logback-logstash"))

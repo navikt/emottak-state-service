@@ -1,11 +1,13 @@
 package no.nav.emottak.state.processor
 
 import io.github.oshai.kotlinlogging.KotlinLogging
+import io.ktor.http.ContentType
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.onEach
-import no.nav.emottak.state.integration.ediadapter.EdiAdapterClient
+import no.nav.emottak.ediadapter.client.EdiAdapterClient
+import no.nav.emottak.ediadapter.model.PostMessageRequest
 import no.nav.emottak.state.model.CreateState
 import no.nav.emottak.state.model.DialogMessage
 import no.nav.emottak.state.model.MessageType.DIALOG
@@ -14,6 +16,7 @@ import no.nav.emottak.state.service.MessageStateService
 import java.net.URI
 
 private val log = KotlinLogging.logger {}
+const val BASE64_ENCODING = "base64"
 
 class MessageProcessor(
     private val messageReceiver: MessageReceiver,
@@ -29,15 +32,25 @@ class MessageProcessor(
         messageReceiver.receiveMessages()
 
     internal suspend fun processAndSendMessage(dialogMessage: DialogMessage) {
-        val messageResponse = ediAdapterClient.postMessage(dialogMessage)
+        val postMessageRequest = PostMessageRequest(
+            businessDocument = dialogMessage.toString(),
+            contentType = ContentType.Application.Xml.toString(),
+            contentTransferEncoding = BASE64_ENCODING
+        )
+
+        val (messageResponse, _) = ediAdapterClient.postMessage(postMessageRequest)
+
+        if (messageResponse == null) {
+            return
+        }
 
         val createState = CreateState(
             messageType = DIALOG,
             externalRefId = messageResponse.id,
-            externalMessageUrl = URI.create(messageResponse.url).toURL()
+            externalMessageUrl = URI.create(messageResponse.location).toURL()
         )
 
-        messageStateService.createInitialState(createState)
+        val newMessage = messageStateService.createInitialState(createState)
         log.info { "Processed and sent message with reference id: ${dialogMessage.id}" }
     }
 }

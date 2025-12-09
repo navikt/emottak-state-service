@@ -6,10 +6,13 @@ import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.equals.shouldBeEqual
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
-import no.nav.emottak.state.integration.ediadapter.EdiAdapterClient
-import no.nav.emottak.state.integration.ediadapter.FakeEdiAdapterClient
+import no.nav.emottak.ediadapter.client.EdiAdapterClient
+import no.nav.emottak.ediadapter.model.ErrorMessage
+import no.nav.emottak.ediadapter.model.Metadata
+import no.nav.emottak.ediadapter.model.PostMessageRequest
+import no.nav.emottak.state.DEFAULT_URL
+import no.nav.emottak.state.FakeEdiAdapterClient
 import no.nav.emottak.state.model.DialogMessage
-import no.nav.emottak.state.model.PostMessageResponse
 import no.nav.emottak.state.receiver.MessageReceiver
 import no.nav.emottak.state.service.FakeTransactionalMessageStateService
 import org.apache.kafka.common.serialization.ByteArrayDeserializer
@@ -21,14 +24,18 @@ class MessageProcessorSpec : StringSpec(
 
         "Process dialog message - Initialize message state with response from ediAdapterClient" {
             val uuid = Uuid.random()
-            val url = "https://example.com/messages/1"
-            val messageResponse = PostMessageResponse(uuid, url)
+            val location = "$DEFAULT_URL$uuid"
+            val metadata = Metadata(
+                id = uuid,
+                location = location
+            )
             val messageStateService = FakeTransactionalMessageStateService()
             val messageProcessor = MessageProcessor(
                 dummyMessageReceiver(),
                 messageStateService,
-                stubEdiAdapterClient(messageResponse)
+                stubEdiAdapterClient(metadata)
             )
+
             messageStateService.getMessageSnapshot(uuid).shouldBeNull()
 
             val dialogMessage = DialogMessage(uuid, "data".toByteArray())
@@ -37,13 +44,14 @@ class MessageProcessorSpec : StringSpec(
             val messageSnapshot = messageStateService.getMessageSnapshot(uuid)
             messageSnapshot.shouldNotBeNull()
             messageSnapshot.messageState.externalRefId shouldBeEqual uuid
-            messageSnapshot.messageState.externalMessageUrl.toString() shouldBeEqual url
+            messageSnapshot.messageState.externalMessageUrl.toString() shouldBeEqual location
         }
     }
 )
 
-private fun stubEdiAdapterClient(message: PostMessageResponse): EdiAdapterClient = object : FakeEdiAdapterClient() {
-    override suspend fun postMessage(dialogMessage: DialogMessage): PostMessageResponse = message
+private fun stubEdiAdapterClient(metadata: Metadata): EdiAdapterClient = object : FakeEdiAdapterClient() {
+    override suspend fun postMessage(postMessagesRequest: PostMessageRequest): Pair<Metadata?, ErrorMessage?> =
+        Pair(metadata, null)
 }
 
 private fun dummyMessageReceiver(): MessageReceiver = MessageReceiver(
