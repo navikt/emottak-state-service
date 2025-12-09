@@ -8,7 +8,15 @@ import kotlin.time.Duration
 data class Config(
     val server: Server,
     val poller: Poller,
+    val kafka: Kafka,
+    val kafkaTopics: KafkaTopics,
     val database: Database
+)
+
+fun Config.withKafka(update: Kafka.() -> Kafka) = copy(kafka = kafka.update())
+
+data class KafkaTopics(
+    val messageInTopic: String
 )
 
 data class Server(

@@ -50,6 +50,7 @@ dependencies {
     implementation(libs.bundles.prometheus)
     implementation(libs.hoplite.core)
     implementation(libs.hoplite.hocon)
+    implementation(libs.kotlin.kafka)
     implementation(libs.jwt)
     implementation(libs.nimbus.jwt)
     implementation(libs.ktor.client.auth)
@@ -69,6 +70,8 @@ dependencies {
     implementation(libs.flyway.postgresql)
     implementation(libs.postgresql)
     implementation(libs.token.validation.ktor.v3)
+    implementation(libs.edi.adapter.client)
+    implementation(libs.edi.adapter.model)
     testImplementation(testLibs.bundles.kotest)
     testImplementation(testLibs.kotest.assertions.arrow)
     testImplementation(testLibs.kotest.extensions.jvm)
@@ -77,6 +80,7 @@ dependencies {
     testImplementation(testLibs.ktor.client.mock)
     testImplementation(testLibs.testcontainers)
     testImplementation(testLibs.testcontainers.postgresql)
+    testImplementation(testLibs.turbine)
     testImplementation(kotlin("test"))
 }
 

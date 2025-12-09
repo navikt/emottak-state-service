@@ -24,9 +24,12 @@ dependencyResolutionManagement {
             version("postgresql", "42.7.5")
             version("hikari", "6.3.0")
             version("hoplite", "2.8.2")
+            version("kotlin-kafka", "0.4.1")
             version("prometheus", "1.12.4")
             version("logback", "1.4.11")
             version("logstash", "7.4")
+            version("edi-adapter-client", "0.0.2-SNAPSHOT")
+            version("edi-adapter-model", "0.0.2-SNAPSHOT")
 
             library("arrow-core", "io.arrow-kt", "arrow-core").versionRef("arrow")
             library("arrow-functions", "io.arrow-kt", "arrow-functions").versionRef("arrow")
@@ -37,6 +40,8 @@ dependencyResolutionManagement {
 
             library("hoplite-core", "com.sksamuel.hoplite", "hoplite-core").versionRef("hoplite")
             library("hoplite-hocon", "com.sksamuel.hoplite", "hoplite-hocon").versionRef("hoplite")
+
+            library("kotlin-kafka", "io.github.nomisrev", "kotlin-kafka").versionRef("kotlin-kafka")
 
             library("jwt", "com.auth0", "java-jwt").versionRef("jwt")
             library("nimbus-jwt", "com.nimbusds", "nimbus-jose-jwt").versionRef("nimbus-jwt")
@@ -69,6 +74,9 @@ dependencyResolutionManagement {
             library("ktor-server-auth-jvm", "io.ktor", "ktor-server-auth-jvm").versionRef("ktor")
             library("token-validation-ktor-v3", "no.nav.security", "token-validation-ktor-v3").versionRef("token-validation-ktor")
 
+            library("edi-adapter-client", "no.nav.emottak", "edi-adapter-client").versionRef("edi-adapter-client")
+            library("edi-adapter-model", "no.nav.emottak", "edi-adapter-model").versionRef("edi-adapter-model")
+
             bundle("prometheus", listOf("ktor-server-metrics-micrometer", "micrometer-registry-prometheus"))
             bundle("logging", listOf("logback-classic", "logback-logstash"))
         }
@@ -80,6 +88,7 @@ dependencyResolutionManagement {
             version("kotest", "5.9.1")
             version("testcontainers", "1.18.1")
             version("kotest-extensions", "2.0.2")
+            version("turbine", "1.2.0")
 
             library("ktor-server-test-host", "io.ktor", "ktor-server-test-host").versionRef("ktor-server-test")
             library("ktor-client-mock", "io.ktor", "ktor-client-mock").versionRef("ktor")
@@ -94,6 +103,8 @@ dependencyResolutionManagement {
 
             library("testcontainers", "org.testcontainers", "testcontainers").versionRef("testcontainers")
             library("testcontainers-postgresql", "org.testcontainers", "postgresql").versionRef("testcontainers")
+
+            library("turbine", "app.cash.turbine", "turbine").versionRef("turbine")
 
             bundle("kotest", listOf("kotest-runner-junit5", "kotest-framework-datatest"))
         }

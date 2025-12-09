@@ -5,10 +5,16 @@ import arrow.fx.coroutines.ResourceScope
 import arrow.fx.coroutines.await.awaitAll
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
+import io.github.nomisRev.kafka.receiver.AutoOffsetReset
+import io.github.nomisRev.kafka.receiver.KafkaReceiver
+import io.github.nomisRev.kafka.receiver.ReceiverSettings
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.micrometer.prometheus.PrometheusConfig.DEFAULT
 import io.micrometer.prometheus.PrometheusMeterRegistry
+import no.nav.emottak.state.config.Kafka
 import no.nav.emottak.state.config.toProperties
+import org.apache.kafka.common.serialization.ByteArrayDeserializer
+import org.apache.kafka.common.serialization.StringDeserializer
 import org.flywaydb.core.Flyway
 import org.flywaydb.core.api.output.MigrateResult
 import org.jetbrains.exposed.v1.jdbc.Database
@@ -19,6 +25,7 @@ private val log = KotlinLogging.logger {}
 
 data class Dependencies(
     val database: Database,
+    val kafkaReceiver: KafkaReceiver<String, ByteArray>,
     val meterRegistry: PrometheusMeterRegistry
 )
 
@@ -45,15 +52,36 @@ private fun flyway(dataSource: HikariDataSource, flywayConfig: DatabaseConfig.Fl
         .load()
         .migrate()
 
+private fun kafkaReceiverSettings(
+    kafka: Kafka,
+    autoOffsetReset: AutoOffsetReset
+): ReceiverSettings<String, ByteArray> =
+    ReceiverSettings(
+        bootstrapServers = kafka.bootstrapServers,
+        keyDeserializer = StringDeserializer(),
+        valueDeserializer = ByteArrayDeserializer(),
+        groupId = kafka.groupId,
+        properties = kafka.toProperties(),
+        autoOffsetReset = autoOffsetReset
+    )
+
+internal fun kafkaReceiver(
+    kafka: Kafka,
+    autoOffsetReset: AutoOffsetReset = AutoOffsetReset.Latest
+): KafkaReceiver<String, ByteArray> =
+    KafkaReceiver(kafkaReceiverSettings(kafka, autoOffsetReset))
+
 suspend fun ResourceScope.dependencies(): Dependencies = awaitAll {
     val config = config()
 
     val metricsRegistry = async { metricsRegistry() }
     val dataSource = async { dataSource(config.database) }
     val database = async { database(config.database, dataSource.await()) }
+    val kafkaReceiver = async { kafkaReceiver(config.kafka) }
 
     Dependencies(
         database.await(),
+        kafkaReceiver.await(),
         metricsRegistry.await()
     )
 }
