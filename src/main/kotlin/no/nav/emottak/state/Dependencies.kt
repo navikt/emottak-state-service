@@ -11,9 +11,8 @@ import io.github.nomisRev.kafka.receiver.ReceiverSettings
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.micrometer.prometheus.PrometheusConfig.DEFAULT
 import io.micrometer.prometheus.PrometheusMeterRegistry
+import no.nav.emottak.state.config.Kafka
 import no.nav.emottak.state.config.toProperties
-import no.nav.emottak.utils.config.Kafka
-import no.nav.emottak.utils.config.toProperties
 import org.apache.kafka.common.serialization.ByteArrayDeserializer
 import org.apache.kafka.common.serialization.StringDeserializer
 import org.flywaydb.core.Flyway

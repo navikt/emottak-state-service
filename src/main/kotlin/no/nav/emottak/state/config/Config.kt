@@ -2,7 +2,6 @@ package no.nav.emottak.state.config
 
 import com.sksamuel.hoplite.Masked
 import kotlinx.serialization.Serializable
-import no.nav.emottak.utils.config.Kafka
 import java.util.Properties
 import kotlin.time.Duration
 

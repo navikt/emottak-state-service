@@ -9,9 +9,9 @@ import io.kotest.matchers.shouldBe
 import no.nav.emottak.state.KafkaSpec
 import no.nav.emottak.state.config
 import no.nav.emottak.state.config.Config
+import no.nav.emottak.state.config.SecurityProtocol
 import no.nav.emottak.state.config.withKafka
 import no.nav.emottak.state.kafkaReceiver
-import no.nav.emottak.utils.config.SecurityProtocol
 import org.apache.kafka.clients.producer.ProducerRecord
 import kotlin.uuid.Uuid
 
