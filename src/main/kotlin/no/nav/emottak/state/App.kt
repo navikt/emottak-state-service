@@ -14,7 +14,6 @@ import io.ktor.utils.io.CancellationException
 import io.micrometer.prometheus.PrometheusMeterRegistry
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.currentCoroutineContext
-import no.nav.emottak.state.adapter.FakeEdiAdapterClient
 import no.nav.emottak.state.evaluator.StateEvaluator
 import no.nav.emottak.state.evaluator.StateTransitionValidator
 import no.nav.emottak.state.plugin.configureMetrics
@@ -38,7 +37,7 @@ fun main() = SuspendApp {
             val deps = dependencies()
 
             val poller = PollerService(
-                FakeEdiAdapterClient(),
+                deps.ediAdapterClient,
                 messageStateService(deps.database),
                 stateEvaluatorService(),
                 dialogMessagePublisher(deps.kafkaPublisher)

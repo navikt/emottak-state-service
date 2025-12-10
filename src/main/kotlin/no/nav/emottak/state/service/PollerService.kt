@@ -15,8 +15,9 @@ import kotlinx.coroutines.flow.flatMapConcat
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onCompletion
+import no.nav.emottak.ediadapter.client.EdiAdapterClient
+import no.nav.emottak.ediadapter.model.StatusInfo
 import no.nav.emottak.state.StateError
-import no.nav.emottak.state.adapter.EdiAdapterClient
 import no.nav.emottak.state.config
 import no.nav.emottak.state.model.AppRecStatus
 import no.nav.emottak.state.model.ExternalDeliveryState
@@ -32,6 +33,7 @@ import no.nav.emottak.state.model.formatInvalidState
 import no.nav.emottak.state.model.formatTransition
 import no.nav.emottak.state.model.formatUnchanged
 import no.nav.emottak.state.publisher.MessagePublisher
+import no.nav.emottak.state.util.translate
 import no.nav.emottak.state.withMessageContext
 
 private val log = KotlinLogging.logger {}
@@ -57,7 +59,18 @@ class PollerService(
     internal suspend fun pollAndProcessMessage(message: MessageState) = with(stateEvaluatorService) {
         val externalRefId = message.externalRefId
         val (externalStatuses, error) = ediAdapterClient.getMessageStatus(externalRefId)
-        val externalStatus = externalStatuses!!.last()
+
+        when (error) {
+            null -> processMessage(externalStatuses, message)
+            else -> log.error { error }
+        }
+    }
+
+    private suspend fun processMessage(
+        externalStatuses: List<StatusInfo>?,
+        message: MessageState
+    ) {
+        val externalStatus = externalStatuses!!.last().translate()
 
         val deliveryState = externalStatus.deliveryState
         val appRecStatus = externalStatus.appRecStatus

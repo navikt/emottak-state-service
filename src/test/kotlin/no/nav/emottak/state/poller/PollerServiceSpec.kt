@@ -2,40 +2,30 @@ package no.nav.emottak.state.poller
 
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
-import no.nav.emottak.state.adapter.EdiAdapterClient
-import no.nav.emottak.state.adapter.FakeEdiAdapterClient
+import no.nav.emottak.ediadapter.client.EdiAdapterClient
+import no.nav.emottak.ediadapter.model.DeliveryState
+import no.nav.emottak.state.FakeEdiAdapterClient
 import no.nav.emottak.state.evaluator.StateEvaluator
 import no.nav.emottak.state.evaluator.StateTransitionValidator
-import no.nav.emottak.state.model.AppRecStatus
+import no.nav.emottak.state.model.AppRecStatus.OK
 import no.nav.emottak.state.model.AppRecStatus.REJECTED
 import no.nav.emottak.state.model.CreateState
-import no.nav.emottak.state.model.ExternalDeliveryState
 import no.nav.emottak.state.model.ExternalDeliveryState.ACKNOWLEDGED
-import no.nav.emottak.state.model.ExternalDeliveryState.UNCONFIRMED
 import no.nav.emottak.state.model.MessageType.DIALOG
 import no.nav.emottak.state.publisher.FakeDialogMessagePublisher
 import no.nav.emottak.state.publisher.MessagePublisher
-import no.nav.emottak.state.repository.FakeMessageRepository
-import no.nav.emottak.state.repository.FakeMessageStateHistoryRepository
-import no.nav.emottak.state.repository.FakeMessageStateTransactionRepository
+import no.nav.emottak.state.service.FakeTransactionalMessageStateService
 import no.nav.emottak.state.service.MessageStateService
 import no.nav.emottak.state.service.PollerService
 import no.nav.emottak.state.service.StateEvaluatorService
-import no.nav.emottak.state.service.TransactionalMessageStateService
 import java.net.URI
 import kotlin.uuid.Uuid
+import no.nav.emottak.ediadapter.model.AppRecStatus as ExternalAppRecStatus
 
 class PollerServiceSpec : StringSpec(
     {
         "No state change → no publish" {
-            val ediAdapterClient = FakeEdiAdapterClient()
-            val messageStateService = messageStateService()
-            val dialogMessagePublisher = FakeDialogMessagePublisher()
-            val pollerService = pollerService(
-                ediAdapterClient,
-                messageStateService,
-                dialogMessagePublisher
-            )
+            val (ediAdapterClient, messageStateService, dialogMessagePublisher, pollerService) = fixture()
 
             val externalRefId = Uuid.random()
             val externalUrl = URI("http://example.com/1").toURL()
@@ -47,7 +37,7 @@ class PollerServiceSpec : StringSpec(
                     externalUrl
                 )
             )
-            ediAdapterClient.setStatus(externalRefId, ACKNOWLEDGED, null)
+            ediAdapterClient.givenStatus(externalRefId, DeliveryState.ACKNOWLEDGED, null)
 
             pollerService.pollAndProcessMessage(messageSnapshot.messageState)
 
@@ -59,14 +49,7 @@ class PollerServiceSpec : StringSpec(
         }
 
         "PENDING → COMPLETED publishes update" {
-            val ediAdapterClient = FakeEdiAdapterClient()
-            val messageStateService = messageStateService()
-            val dialogMessagePublisher = FakeDialogMessagePublisher()
-            val pollerService = pollerService(
-                ediAdapterClient,
-                messageStateService,
-                dialogMessagePublisher
-            )
+            val (ediAdapterClient, messageStateService, dialogMessagePublisher, pollerService) = fixture()
 
             val externalRefId = Uuid.random()
             val externalUrl = URI("http://example.com/1").toURL()
@@ -79,29 +62,22 @@ class PollerServiceSpec : StringSpec(
                 )
             )
 
-            ediAdapterClient.setStatus(externalRefId, ACKNOWLEDGED, null)
+            ediAdapterClient.givenStatus(externalRefId, DeliveryState.ACKNOWLEDGED, null)
 
             val messageState = messageSnapshot.messageState
             pollerService.pollAndProcessMessage(messageState)
 
-            ediAdapterClient.setStatus(externalRefId, ACKNOWLEDGED, AppRecStatus.OK)
+            ediAdapterClient.givenStatus(externalRefId, DeliveryState.ACKNOWLEDGED, ExternalAppRecStatus.OK)
 
             pollerService.pollAndProcessMessage(messageState)
 
             dialogMessagePublisher.published.size shouldBe 1
             dialogMessagePublisher.published.first().referenceId shouldBe externalRefId
-            dialogMessagePublisher.published.first().appRecStatus shouldBe AppRecStatus.OK
+            dialogMessagePublisher.published.first().appRecStatus shouldBe OK
         }
 
         "External REJECTED → publish rejection" {
-            val ediAdapterClient = FakeEdiAdapterClient()
-            val messageStateService = messageStateService()
-            val dialogMessagePublisher = FakeDialogMessagePublisher()
-            val pollerService = pollerService(
-                ediAdapterClient,
-                messageStateService,
-                dialogMessagePublisher
-            )
+            val (ediAdapterClient, messageStateService, dialogMessagePublisher, pollerService) = fixture()
 
             val externalRefId = Uuid.random()
             val externalUrl = URI("http://example.com/1").toURL()
@@ -113,7 +89,7 @@ class PollerServiceSpec : StringSpec(
                     externalUrl
                 )
             )
-            ediAdapterClient.setStatus(externalRefId, ExternalDeliveryState.REJECTED, null)
+            ediAdapterClient.givenStatus(externalRefId, DeliveryState.REJECTED, null)
 
             pollerService.pollAndProcessMessage(messageSnapshot.messageState)
 
@@ -123,14 +99,7 @@ class PollerServiceSpec : StringSpec(
         }
 
         "Unresolvable external state → INVALID but not published" {
-            val ediAdapterClient = FakeEdiAdapterClient()
-            val messageStateService = messageStateService()
-            val dialogMessagePublisher = FakeDialogMessagePublisher()
-            val pollerService = pollerService(
-                ediAdapterClient,
-                messageStateService,
-                dialogMessagePublisher
-            )
+            val (ediAdapterClient, messageStateService, dialogMessagePublisher, pollerService) = fixture()
 
             val externalRefId = Uuid.random()
             val externalUrl = URI("http://example.com/1").toURL()
@@ -142,7 +111,9 @@ class PollerServiceSpec : StringSpec(
                     externalUrl
                 )
             )
-            ediAdapterClient.setStatus(externalRefId, UNCONFIRMED, REJECTED)
+
+            ediAdapterClient.givenStatus(externalRefId, DeliveryState.UNCONFIRMED, ExternalAppRecStatus.REJECTED)
+
             val messageState = messageSnapshot.messageState
 
             pollerService.pollAndProcessMessage(messageState)
@@ -155,6 +126,30 @@ class PollerServiceSpec : StringSpec(
         }
     }
 )
+
+private data class Fixture(
+    val ediAdapterClient: FakeEdiAdapterClient,
+    val messageStateService: FakeTransactionalMessageStateService,
+    val dialogMessagePublisher: FakeDialogMessagePublisher,
+    val pollerService: PollerService
+)
+
+private fun fixture(): Fixture {
+    val ediAdapterClient = FakeEdiAdapterClient()
+    val messageStateService = FakeTransactionalMessageStateService()
+    val dialogMessagePublisher = FakeDialogMessagePublisher()
+
+    return Fixture(
+        ediAdapterClient,
+        messageStateService,
+        dialogMessagePublisher,
+        pollerService(
+            ediAdapterClient,
+            messageStateService,
+            dialogMessagePublisher
+        )
+    )
+}
 
 private fun pollerService(
     ediAdapterClient: EdiAdapterClient,
@@ -171,17 +166,3 @@ private fun stateEvaluatorService(): StateEvaluatorService = StateEvaluatorServi
     StateEvaluator(),
     StateTransitionValidator()
 )
-
-private fun messageStateService(): TransactionalMessageStateService {
-    val messageRepository = FakeMessageRepository()
-    val historyRepository = FakeMessageStateHistoryRepository()
-    val txRepository = FakeMessageStateTransactionRepository(
-        messageRepository,
-        historyRepository
-    )
-    return TransactionalMessageStateService(
-        messageRepository,
-        historyRepository,
-        txRepository
-    )
-}

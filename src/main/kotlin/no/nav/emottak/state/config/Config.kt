@@ -12,8 +12,16 @@ data class Config(
     val kafka: Kafka,
     val server: Server,
     val poller: Poller,
-    val database: Database
+    val database: Database,
+    val ediAdapter: EdiAdapter
 )
+
+data class EdiAdapter(
+    val scope: Scope
+) {
+    @JvmInline
+    value class Scope(val value: String)
+}
 
 data class Poller(
     val fetchLimit: Int,
