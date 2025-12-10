@@ -18,6 +18,8 @@ data class Config(
 )
 
 data class Kafka(
+    val topic: String,
+    val groupId: String,
     val bootstrapServers: String,
     val securityProtocol: SecurityProtocol,
     val keystoreType: KeystoreType,
@@ -25,8 +27,7 @@ data class Kafka(
     val keystorePassword: Masked,
     val truststoreType: TruststoreType,
     val truststoreLocation: TruststoreLocation,
-    val truststorePassword: Masked,
-    val groupId: String
+    val truststorePassword: Masked
 ) {
     private val securityProtocolConfig = "security.protocol"
     private val sslKeystoreTypeConfig = "ssl.keystore.type"

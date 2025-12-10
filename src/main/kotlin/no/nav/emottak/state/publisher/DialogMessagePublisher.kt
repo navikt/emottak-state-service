@@ -37,7 +37,7 @@ class DialogMessagePublisher(
 
     private fun toProducerRecord(referenceId: Uuid, message: String) =
         ProducerRecord(
-            "TOPIC",
+            kafkaConfig.topic,
             referenceId.toString(),
             message.toByteArray()
         )
