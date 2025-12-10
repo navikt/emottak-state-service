@@ -85,13 +85,6 @@ data class EdiAdapter(
     @JvmInline
     value class Scope(val value: String)
 }
-data class Server(
-    val port: Port,
-    val preWait: Duration
-)
-
-@JvmInline
-value class Port(val value: Int)
 
 data class Poller(
     val fetchLimit: Int,
