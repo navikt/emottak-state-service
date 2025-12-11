@@ -3,12 +3,16 @@ package no.nav.emottak.state
 import arrow.fx.coroutines.ExitCase
 import arrow.fx.coroutines.ResourceScope
 import arrow.fx.coroutines.await.awaitAll
-import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
+import io.github.nomisRev.kafka.publisher.KafkaPublisher
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.micrometer.prometheus.PrometheusConfig.DEFAULT
 import io.micrometer.prometheus.PrometheusMeterRegistry
-import no.nav.emottak.state.config.toProperties
+import no.nav.emottak.ediadapter.client.EdiAdapterClient
+import no.nav.emottak.ediadapter.client.HttpEdiAdapterClient
+import no.nav.emottak.ediadapter.client.scopedAuthHttpClient
+import no.nav.emottak.state.config.EdiAdapter
+import no.nav.emottak.state.config.Kafka
 import org.flywaydb.core.Flyway
 import org.flywaydb.core.api.output.MigrateResult
 import org.jetbrains.exposed.v1.jdbc.Database
@@ -19,7 +23,9 @@ private val log = KotlinLogging.logger {}
 
 data class Dependencies(
     val database: Database,
-    val meterRegistry: PrometheusMeterRegistry
+    val ediAdapterClient: EdiAdapterClient,
+    val meterRegistry: PrometheusMeterRegistry,
+    val kafkaPublisher: KafkaPublisher<String, ByteArray>
 )
 
 internal suspend fun ResourceScope.metricsRegistry(): PrometheusMeterRegistry =
@@ -27,8 +33,18 @@ internal suspend fun ResourceScope.metricsRegistry(): PrometheusMeterRegistry =
         p.close().also { log.info { "Closed prometheus registry" } }
     }
 
+internal suspend fun ResourceScope.ediAdapterClient(ediAdapter: EdiAdapter): EdiAdapterClient =
+    install({ HttpEdiAdapterClient(scopedAuthHttpClient(ediAdapter.scope.value)) }) { p, _: ExitCase ->
+        p.close().also { log.info { "Closed edi adapter client" } }
+    }
+
+internal suspend fun ResourceScope.kafkaPublisher(kafka: Kafka): KafkaPublisher<String, ByteArray> =
+    install({ KafkaPublisher(kafka.toPublisherSettings()) }) { p, _: ExitCase ->
+        p.close().also { log.info { "Closed kafka publisher" } }
+    }
+
 internal suspend fun ResourceScope.dataSource(config: DatabaseConfig): HikariDataSource =
-    install({ HikariDataSource(HikariConfig(config.toProperties())) }) { h, _: ExitCase ->
+    install({ HikariDataSource(config.toHikariConfig()) }) { h, _: ExitCase ->
         h.close().also { log.info { "Closed hikari data source" } }
     }
 
@@ -49,11 +65,15 @@ suspend fun ResourceScope.dependencies(): Dependencies = awaitAll {
     val config = config()
 
     val metricsRegistry = async { metricsRegistry() }
+    val kafkaPublisher = async { kafkaPublisher(config.kafka) }
     val dataSource = async { dataSource(config.database) }
+    val ediAdapterClient = async { ediAdapterClient(config.ediAdapter) }
     val database = async { database(config.database, dataSource.await()) }
 
     Dependencies(
         database.await(),
-        metricsRegistry.await()
+        ediAdapterClient.await(),
+        metricsRegistry.await(),
+        kafkaPublisher.await()
     )
 }

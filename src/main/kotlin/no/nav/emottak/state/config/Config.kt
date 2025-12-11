@@ -1,27 +1,96 @@
 package no.nav.emottak.state.config
 
 import com.sksamuel.hoplite.Masked
+import com.zaxxer.hikari.HikariConfig
+import io.github.nomisRev.kafka.publisher.PublisherSettings
 import kotlinx.serialization.Serializable
+import org.apache.kafka.common.serialization.ByteArraySerializer
+import org.apache.kafka.common.serialization.StringSerializer
 import java.util.Properties
 import kotlin.time.Duration
 
 data class Config(
+    val kafka: Kafka,
     val server: Server,
     val poller: Poller,
-    val database: Database
+    val database: Database,
+    val ediAdapter: EdiAdapter
 )
+
+data class Kafka(
+    val topic: String,
+    val groupId: String,
+    val bootstrapServers: String,
+    val securityProtocol: SecurityProtocol,
+    val keystoreType: KeystoreType,
+    val keystoreLocation: KeystoreLocation,
+    val keystorePassword: Masked,
+    val truststoreType: TruststoreType,
+    val truststoreLocation: TruststoreLocation,
+    val truststorePassword: Masked
+) {
+    private val securityProtocolConfig = "security.protocol"
+    private val sslKeystoreTypeConfig = "ssl.keystore.type"
+    private val sslKeystoreLocationConfig = "ssl.keystore.location"
+    private val sslKeystorePasswordConfig = "ssl.keystore.password"
+    private val sslTruststoreTypeConfig = "ssl.truststore.type"
+    private val sslTruststoreLocationConfig = "ssl.truststore.location"
+    private val sslTruststorePasswordConfig = "ssl.truststore.password"
+
+    @JvmInline
+    value class SecurityProtocol(val value: String)
+
+    @JvmInline
+    value class KeystoreType(val value: String)
+
+    @JvmInline
+    value class KeystoreLocation(val value: String)
+
+    @JvmInline
+    value class TruststoreType(val value: String)
+
+    @JvmInline
+    value class TruststoreLocation(val value: String)
+
+    fun toPublisherSettings(): PublisherSettings<String, ByteArray> =
+        PublisherSettings(
+            bootstrapServers = bootstrapServers,
+            keySerializer = StringSerializer(),
+            valueSerializer = ByteArraySerializer(),
+            properties = toProperties()
+        )
+
+    private fun toProperties() = Properties()
+        .apply {
+            put(securityProtocolConfig, securityProtocol.value)
+            put(sslKeystoreTypeConfig, keystoreType.value)
+            put(sslKeystoreLocationConfig, keystoreLocation.value)
+            put(sslKeystorePasswordConfig, keystorePassword.value)
+            put(sslTruststoreTypeConfig, truststoreType.value)
+            put(sslTruststoreLocationConfig, truststoreLocation.value)
+            put(sslTruststorePasswordConfig, truststorePassword.value)
+        }
+}
 
 data class Server(
     val port: Port,
     val preWait: Duration
-)
+) {
+    @JvmInline
+    value class Port(val value: Int)
+}
 
-@JvmInline
-value class Port(val value: Int)
+data class EdiAdapter(
+    val scope: Scope
+) {
+    @JvmInline
+    value class Scope(val value: String)
+}
 
 data class Poller(
     val fetchLimit: Int,
-    val minAgeSeconds: Duration
+    val minAgeSeconds: Duration,
+    val scheduleInterval: Duration
 )
 
 data class Database(
@@ -74,20 +143,21 @@ data class Database(
 
     @Serializable
     data class Flyway(val locations: String, val baselineOnMigrate: Boolean)
-}
 
-fun Database.toProperties() = Properties()
-    .apply {
-        put("jdbcUrl", url.value)
-        put("username", username.value)
-        put("password", password.value)
-        put("driverClassName", driverClassName.value)
-        put("minimumIdle", minimumIdleConnections.value)
-        put("maxLifetime", maxLifetimeConnections.value)
-        put("maximumPoolSize", maxConnectionPoolSize.value)
-        put("connectionTimeout", connectionTimeout.value)
-        put("idleTimeout", idleConnectionTimeout.value)
-        put("dataSource.cachePrepStmts", cachePreparedStatements.value)
-        put("dataSource.prepStmtCacheSize", preparedStatementsCacheSize.value)
-        put("dataSource.prepStmtCacheSqlLimit", preparedStatementsCacheSqlLimit.value)
-    }
+    fun toHikariConfig(): HikariConfig = Properties()
+        .apply {
+            put("jdbcUrl", url.value)
+            put("username", username.value)
+            put("password", password.value)
+            put("driverClassName", driverClassName.value)
+            put("minimumIdle", minimumIdleConnections.value)
+            put("maxLifetime", maxLifetimeConnections.value)
+            put("maximumPoolSize", maxConnectionPoolSize.value)
+            put("connectionTimeout", connectionTimeout.value)
+            put("idleTimeout", idleConnectionTimeout.value)
+            put("dataSource.cachePrepStmts", cachePreparedStatements.value)
+            put("dataSource.prepStmtCacheSize", preparedStatementsCacheSize.value)
+            put("dataSource.prepStmtCacheSqlLimit", preparedStatementsCacheSqlLimit.value)
+        }
+        .let(::HikariConfig)
+}

@@ -4,6 +4,9 @@ import no.nav.emottak.state.model.CreateState
 import no.nav.emottak.state.model.MessageState
 import no.nav.emottak.state.model.MessageStateSnapshot
 import no.nav.emottak.state.model.UpdateState
+import no.nav.emottak.state.repository.FakeMessageRepository
+import no.nav.emottak.state.repository.FakeMessageStateHistoryRepository
+import no.nav.emottak.state.repository.FakeMessageStateTransactionRepository
 import no.nav.emottak.state.repository.MessageRepository
 import no.nav.emottak.state.repository.MessageStateHistoryRepository
 import no.nav.emottak.state.repository.MessageStateTransactionRepository
@@ -140,4 +143,36 @@ class TransactionalMessageStateService(
     override suspend fun findPollableMessages(): List<MessageState> = messageRepository.findForPolling()
 
     override suspend fun markAsPolled(externalRefIds: List<Uuid>): Int = messageRepository.markPolled(externalRefIds)
+}
+
+class FakeTransactionalMessageStateService() : MessageStateService {
+    private val messageRepository = FakeMessageRepository()
+    private val historyRepository = FakeMessageStateHistoryRepository()
+    private val transactionRepository =
+        FakeMessageStateTransactionRepository(
+            messageRepository,
+            historyRepository
+        )
+
+    private val transactionalMessageStateService =
+        TransactionalMessageStateService(
+            messageRepository,
+            historyRepository,
+            transactionRepository
+        )
+
+    override suspend fun createInitialState(createState: CreateState): MessageStateSnapshot =
+        transactionalMessageStateService.createInitialState(createState)
+
+    override suspend fun recordStateChange(updateState: UpdateState): MessageStateSnapshot =
+        transactionalMessageStateService.recordStateChange(updateState)
+
+    override suspend fun getMessageSnapshot(messageId: Uuid): MessageStateSnapshot? =
+        transactionalMessageStateService.getMessageSnapshot(messageId)
+
+    override suspend fun findPollableMessages(): List<MessageState> =
+        transactionalMessageStateService.findPollableMessages()
+
+    override suspend fun markAsPolled(externalRefIds: List<Uuid>): Int =
+        transactionalMessageStateService.markAsPolled(externalRefIds)
 }

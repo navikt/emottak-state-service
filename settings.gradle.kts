@@ -20,6 +20,7 @@ dependencyResolutionManagement {
             version("token-validation-ktor", "5.0.15")
             version("eclipse-angus", "2.0.2")
             version("exposed", "1.0.0-rc-3")
+            version("kotlin-kafka", "0.4.1")
             version("flyway", "11.8.0")
             version("postgresql", "42.7.5")
             version("hikari", "6.3.0")
@@ -27,6 +28,7 @@ dependencyResolutionManagement {
             version("prometheus", "1.12.4")
             version("logback", "1.4.11")
             version("logstash", "7.4")
+            version("edi-adapter-client", "0.0.3")
 
             library("arrow-core", "io.arrow-kt", "arrow-core").versionRef("arrow")
             library("arrow-functions", "io.arrow-kt", "arrow-functions").versionRef("arrow")
@@ -62,12 +64,16 @@ dependencyResolutionManagement {
             library("flyway-postgresql", "org.flywaydb", "flyway-database-postgresql").versionRef("flyway")
             library("postgresql", "org.postgresql", "postgresql").versionRef("postgresql")
 
+            library("kotlin-kafka", "io.github.nomisrev", "kotlin-kafka").versionRef("kotlin-kafka")
+
             library("kotlin-logging", "io.github.oshai", "kotlin-logging-jvm").versionRef("kotlin-logging")
             library("logback-classic", "ch.qos.logback", "logback-classic").versionRef("logback")
             library("logback-logstash", "net.logstash.logback", "logstash-logback-encoder").versionRef("logstash")
 
             library("ktor-server-auth-jvm", "io.ktor", "ktor-server-auth-jvm").versionRef("ktor")
             library("token-validation-ktor-v3", "no.nav.security", "token-validation-ktor-v3").versionRef("token-validation-ktor")
+
+            library("edi-adapter-client", "no.nav.emottak", "edi-adapter-client").versionRef("edi-adapter-client")
 
             bundle("prometheus", listOf("ktor-server-metrics-micrometer", "micrometer-registry-prometheus"))
             bundle("logging", listOf("logback-classic", "logback-logstash"))
