@@ -38,16 +38,22 @@ class MessageProcessor(
             contentTransferEncoding = BASE64_ENCODING
         )
 
-        val (messageResponse, _) = ediAdapterClient.postMessage(postMessageRequest)
+        val (metadata, errorMessage) = ediAdapterClient.postMessage(postMessageRequest)
 
-        if (messageResponse == null) {
+        if (errorMessage != null) {
+            log.error { errorMessage }
+            return
+        }
+
+        if (metadata == null) {
+            log.error { "Metadata is null" }
             return
         }
 
         val createState = CreateState(
             messageType = DIALOG,
-            externalRefId = messageResponse.id,
-            externalMessageUrl = URI.create(messageResponse.location).toURL()
+            externalRefId = metadata.id,
+            externalMessageUrl = URI.create(metadata.location).toURL()
         )
 
         val newMessage = messageStateService.createInitialState(createState)

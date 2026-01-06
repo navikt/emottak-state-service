@@ -55,9 +55,9 @@ class FakeEdiAdapterClient : EdiAdapterClient {
     }
 
     fun givenPostMessage(
-        metadata: Metadata
+        message: Pair<Metadata?, ErrorMessage?>
     ) {
-        postMessages.add(Pair(metadata, null))
+        postMessages.add(message)
     }
 
     override suspend fun getMessageStatus(
