@@ -50,7 +50,7 @@ jobs:
         uses: nais/docker-build-push@v0
         id: docker-build-push
         with:
-          team: team-helsemelding # required
+          team: helsemelding # required
           tag: ${{ github.sha }}
           dockerfile: Dockerfile # optional, default Dockerfile
     outputs:
