@@ -1,11 +1,11 @@
 package no.nav.helsemelding.state.util
 
-import no.nav.emottak.ediadapter.model.DeliveryState
-import no.nav.emottak.ediadapter.model.StatusInfo
+import no.nav.helsemelding.ediadapter.model.DeliveryState
+import no.nav.helsemelding.ediadapter.model.StatusInfo
 import no.nav.helsemelding.state.model.AppRecStatus
 import no.nav.helsemelding.state.model.ExternalDeliveryState
 import no.nav.helsemelding.state.model.ExternalStatus
-import no.nav.emottak.ediadapter.model.AppRecStatus as ExternalAppRecStatus
+import no.nav.helsemelding.ediadapter.model.AppRecStatus as ExternalAppRecStatus
 
 fun StatusInfo.translate(): ExternalStatus =
     ExternalStatus(

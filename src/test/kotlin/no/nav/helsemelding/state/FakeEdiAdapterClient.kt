@@ -1,17 +1,17 @@
 package no.nav.helsemelding.state
 
-import no.nav.emottak.ediadapter.client.EdiAdapterClient
-import no.nav.emottak.ediadapter.model.AppRecStatus
-import no.nav.emottak.ediadapter.model.ApprecInfo
-import no.nav.emottak.ediadapter.model.DeliveryState
-import no.nav.emottak.ediadapter.model.ErrorMessage
-import no.nav.emottak.ediadapter.model.GetBusinessDocumentResponse
-import no.nav.emottak.ediadapter.model.GetMessagesRequest
-import no.nav.emottak.ediadapter.model.Message
-import no.nav.emottak.ediadapter.model.Metadata
-import no.nav.emottak.ediadapter.model.PostAppRecRequest
-import no.nav.emottak.ediadapter.model.PostMessageRequest
-import no.nav.emottak.ediadapter.model.StatusInfo
+import no.nav.helsemelding.ediadapter.client.EdiAdapterClient
+import no.nav.helsemelding.ediadapter.model.AppRecStatus
+import no.nav.helsemelding.ediadapter.model.ApprecInfo
+import no.nav.helsemelding.ediadapter.model.DeliveryState
+import no.nav.helsemelding.ediadapter.model.ErrorMessage
+import no.nav.helsemelding.ediadapter.model.GetBusinessDocumentResponse
+import no.nav.helsemelding.ediadapter.model.GetMessagesRequest
+import no.nav.helsemelding.ediadapter.model.Message
+import no.nav.helsemelding.ediadapter.model.Metadata
+import no.nav.helsemelding.ediadapter.model.PostAppRecRequest
+import no.nav.helsemelding.ediadapter.model.PostMessageRequest
+import no.nav.helsemelding.ediadapter.model.StatusInfo
 import kotlin.uuid.Uuid
 
 class FakeEdiAdapterClient : EdiAdapterClient {

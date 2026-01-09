@@ -15,8 +15,8 @@ import kotlinx.coroutines.flow.flatMapConcat
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onCompletion
-import no.nav.emottak.ediadapter.client.EdiAdapterClient
-import no.nav.emottak.ediadapter.model.StatusInfo
+import no.nav.helsemelding.ediadapter.client.EdiAdapterClient
+import no.nav.helsemelding.ediadapter.model.StatusInfo
 import no.nav.helsemelding.state.StateError
 import no.nav.helsemelding.state.config
 import no.nav.helsemelding.state.model.AppRecStatus

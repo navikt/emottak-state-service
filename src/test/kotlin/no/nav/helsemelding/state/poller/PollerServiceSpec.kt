@@ -2,8 +2,8 @@ package no.nav.helsemelding.state.poller
 
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
-import no.nav.emottak.ediadapter.client.EdiAdapterClient
-import no.nav.emottak.ediadapter.model.DeliveryState
+import no.nav.helsemelding.ediadapter.client.EdiAdapterClient
+import no.nav.helsemelding.ediadapter.model.DeliveryState
 import no.nav.helsemelding.state.FakeEdiAdapterClient
 import no.nav.helsemelding.state.evaluator.StateEvaluator
 import no.nav.helsemelding.state.evaluator.StateTransitionValidator
@@ -20,7 +20,7 @@ import no.nav.helsemelding.state.service.PollerService
 import no.nav.helsemelding.state.service.StateEvaluatorService
 import java.net.URI
 import kotlin.uuid.Uuid
-import no.nav.emottak.ediadapter.model.AppRecStatus as ExternalAppRecStatus
+import no.nav.helsemelding.ediadapter.model.AppRecStatus as ExternalAppRecStatus
 
 class PollerServiceSpec : StringSpec(
     {

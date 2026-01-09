@@ -4,8 +4,8 @@ import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.equals.shouldBeEqual
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
-import no.nav.emottak.ediadapter.model.ErrorMessage
-import no.nav.emottak.ediadapter.model.Metadata
+import no.nav.helsemelding.ediadapter.model.ErrorMessage
+import no.nav.helsemelding.ediadapter.model.Metadata
 import no.nav.helsemelding.state.FakeEdiAdapterClient
 import no.nav.helsemelding.state.model.DialogMessage
 import no.nav.helsemelding.state.receiver.fakeMessageReceiver

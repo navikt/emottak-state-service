@@ -10,9 +10,9 @@ import io.github.nomisRev.kafka.receiver.KafkaReceiver
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.micrometer.prometheus.PrometheusConfig.DEFAULT
 import io.micrometer.prometheus.PrometheusMeterRegistry
-import no.nav.emottak.ediadapter.client.EdiAdapterClient
-import no.nav.emottak.ediadapter.client.HttpEdiAdapterClient
-import no.nav.emottak.ediadapter.client.scopedAuthHttpClient
+import no.nav.helsemelding.ediadapter.client.EdiAdapterClient
+import no.nav.helsemelding.ediadapter.client.HttpEdiAdapterClient
+import no.nav.helsemelding.ediadapter.client.scopedAuthHttpClient
 import no.nav.helsemelding.state.config.EdiAdapter
 import no.nav.helsemelding.state.config.Kafka
 import org.flywaydb.core.Flyway
